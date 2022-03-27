@@ -122,9 +122,9 @@ function Layout({ children }: { children: React.ReactNode }) {
   console.log("accessKey", accessKey);
 
   return (
-    <div className="bg-black text-white min-h-screen justify-between flex flex-col px-8">
+    <div className="bg-zinc-900 text-white min-h-screen justify-between flex flex-col px-8">
       <div>
-        <header className="flex flex-row justify-between my-4">
+        <header className="flex flex-row justify-between py-4 border-b">
           <Link to="/" title="Remix">
             <AgoraLogo />
           </Link>
