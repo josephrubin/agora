@@ -8,25 +8,14 @@ import {
   ScrollRestoration,
   useCatch,
   useLoaderData,
-  Form
 } from "remix";
-import type { LinksFunction } from "remix";
 
-import globalStylesUrl from "~/styles/global.css";
-import darkStylesUrl from "~/styles/dark.css";
-import { getAccessToken, getUserSession } from "./modules/users.server";
+import styles from "./tailwind.css";
 
-// https://remix.run/api/app#links
-export const links: LinksFunction = () => {
-  return [
-    { rel: "stylesheet", href: globalStylesUrl },
-    {
-      rel: "stylesheet",
-      href: darkStylesUrl,
-      media: "(prefers-color-scheme: dark)",
-    },
-  ];
-};
+import { getAccessToken } from "./modules/users.server";
+import { LinksFunction } from "@remix-run/react/routeModules";
+
+export const links: LinksFunction = () => [{ rel: "stylesheet", href: styles }];
 
 // https://remix.run/api/conventions#default-export
 // https://remix.run/api/conventions#route-filenames
@@ -96,7 +85,7 @@ export function CatchBoundary() {
   );
 }
 
-export const loader = async ({request}) => {
+export const loader = async ({ request }: { request: Request }) => {
   const accessKey = await getAccessToken(request);
 
   return accessKey;
@@ -133,70 +122,58 @@ function Layout({ children }: { children: React.ReactNode }) {
   console.log("accessKey", accessKey);
 
   return (
-    <div className="remix-app">
-      <header className="remix-app__header">
-        <div className="container remix-app__header-content">
-          <Link to="/" title="Remix" className="remix-app__header-home-link">
-            <RoJoLogo />
+    <div className="bg-black text-white min-h-screen justify-between flex flex-col px-8">
+      <div>
+        <header className="flex flex-row justify-between my-4">
+          <Link to="/" title="Remix">
+            <AgoraLogo />
           </Link>
-          <nav aria-label="Main navigation" className="remix-app__header-nav">
-            <ul>
+          <nav aria-label="Main navigation">
+            <ul className="flex flex-row gap-8">
               <li>
                 <Link to="/">Home</Link>
               </li>
-              {
-                accessKey
-                  ? (
-                    <li>
-                      <Link to="collections/new">+ New Collection</Link>
-                    </li>
-                  )
-                  : null
-              }
-              {
-                !accessKey
-                  ? (
-                    <>
-                      <li>
-                        <Link to="register">Sign Up</Link>
-                      </li>
-                      <li>
-                        <Link to="login">Sign In</Link>
-                      </li>
-                    </>
-                  )
-                  : null
-              }
-              {
-                accessKey
-                  ? (
-                    <li>
-                    You are signed in.
-                      <form method="post" action="logout">
-                        <input type="submit" value="logout" />
-                      </form>
-                    </li>
-                  )
-                  : null
-              }
+              {accessKey ? (
+                <li>
+                  <Link to="collections/new">+ New Collection</Link>
+                </li>
+              ) : null}
+              {!accessKey ? (
+                <>
+                  <li>
+                    <Link to="login">Log In</Link>
+                  </li>
+                  <li>
+                    <Link to="register">Sign Up</Link>
+                  </li>
+                </>
+              ) : null}
+              {accessKey ? (
+                <li>
+                  You are signed in.
+                  <form method="post" action="logout">
+                    <input type="submit" value="logout" />
+                  </form>
+                </li>
+              ) : null}
             </ul>
           </nav>
-        </div>
-      </header>
-      <div className="remix-app__main">
-        <div className="container remix-app__main-content">{children}</div>
+        </header>
+        <main>{children}</main>
       </div>
-      <footer className="remix-app__footer">
-        <div className="container remix-app__footer-content">
-          <p>&copy; RoJo 2021</p>
-        </div>
+      <footer className="flex flex-row justify-center py-4 border-t">
+        <p>&copy; Agora 2021</p>
       </footer>
     </div>
   );
 }
 
-function RoJoLogo() {
+function AgoraLogo() {
   return (
-    <div><big><b>ROJO_LOGO</b></big></div>
+    <div>
+      <big>
+        <b>AGORA_LOGO</b>
+      </big>
+    </div>
   );
 }
