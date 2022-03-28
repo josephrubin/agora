@@ -18,30 +18,33 @@ import jwt_decode from "jwt-decode";
 
 // See https://github.com/aws/aws-sdk-js-v3/tree/main/lib/lib-dynamodb.
 
-// Constants from the environment.
-const DYNAMODB_REGION = process.env.AGORA_DYNAMODB_REGION;
-const COGNITO_REGION = process.env.AGORA_DYNAMODB_REGION;
-const COLLECTION_TABLE = process.env.AGORA_COLLECTION_TABLE;
-const CAST_TABLE = process.env.AGORA_CAST_TABLE;
-const PRINCIPAL_TABLE = process.env.AGORA_PRINCIPAL_TABLE;
-
-const USER_POOL_ID = process.env.AGORA_USER_POOL_ID!;
-const USER_POOL_CLIENT_ID = process.env.AGORA_USER_POOL_CLIENT_ID!;
+// Our infra file guarantees certain env variables form the
+// otherwise unknown environment.
+interface AgoraEnv {
+  readonly AGORA_DYNAMODB_REGION: string;
+  readonly AGORA_COGNITO_REGION: string;
+  readonly AGORA_COLLECTION_TABLE: string;
+  readonly AGORA_CAST_TABLE: string;
+  readonly AGORA_PRINCIPAL_TABLE: string;
+  readonly AGORA_USER_POOL_ID: string;
+  readonly AGORA_USER_POOL_CLIENT_ID: string;
+}
+const agoraEnv = process.env as unknown as AgoraEnv;
 
 // Our connection to DynamoDB. Created when this lambda starts.
 const dynamoDbDocumentClient = DynamoDBDocument.from(
-  new DynamoDB({ region: DYNAMODB_REGION })
+  new DynamoDB({ region: agoraEnv.AGORA_DYNAMODB_REGION })
 );
 
 // Our connection to Cognito.
 const cognitoClient = new CognitoIdentityProvider({
-  region: COGNITO_REGION,
+  region: agoraEnv.AGORA_COGNITO_REGION,
 });
 
 // A verifier that can validate Cognito JWTS.
 const accessTokenVerifier = CognitoJwtVerifier.create({
-  userPoolId: USER_POOL_ID,
-  clientId: USER_POOL_CLIENT_ID,
+  userPoolId: agoraEnv.AGORA_USER_POOL_ID,
+  clientId: agoraEnv.AGORA_USER_POOL_CLIENT_ID,
   tokenUse: "access",
 });
 
@@ -56,7 +59,7 @@ interface TypeWithId {
  * @param context the lambda execution context.
  * @param callback the function to call with errors / results.
  */
-const lambdaHandler: AsrLambdaHandler = async (event, context, callback) => {
+const lambdaHandler: AsrLambdaHandler = async (event) => {
   // The name of the parent we are resolving inside and the field we're resolving.
   const { parentTypeName, fieldName } = event.info;
   // Arguments to the GraphQL field.
@@ -71,35 +74,26 @@ const lambdaHandler: AsrLambdaHandler = async (event, context, callback) => {
 
   console.log(`Resolve field ${fieldName} on parent ${parentTypeName}.`);
 
-  // Prettier functions for continuing with result or error.
-  function returnResult(result: object|undefined|null): never {
-    return callback(null, result || null);
-  }
   function returnError(errorMessage: string): never {
-    return callback(errorMessage, null);
-  }
-
-  // Return the result if it's available, otherwise fail with an error.
-  function returnResultIfExists(resultObject: object | undefined, errorMessage: string) {
-    resultObject ? returnResult(resultObject) : returnError(errorMessage);
+    throw errorMessage;
   }
 
   // Our Cognito client app secret used to auth requests to Cognito.
   // We get it on every request because it might change.
   // TODO - only get it for requests that we might need it.
   const cognitoAppSecret = (await cognitoClient.describeUserPoolClient({
-    UserPoolId: USER_POOL_ID,
-    ClientId: USER_POOL_CLIENT_ID,
+    UserPoolId: agoraEnv.AGORA_USER_POOL_ID,
+    ClientId: agoraEnv.AGORA_USER_POOL_CLIENT_ID,
   })).UserPoolClient?.ClientSecret;
   if (!cognitoAppSecret) {
-    returnError("Error getting Cognito app secret.");
+    throw "Error getting Cognito app secret.";
   }
   function calculateSecretHash(message: string): string {
     if (cognitoAppSecret) {
       return calculateSecretHashWithKey(message, cognitoAppSecret);
     }
     else {
-      returnError("Attempt to calculate secret hash without Cognito app secret.");
+      throw "Attempt to calculate secret hash without Cognito app secret.";
     }
   }
 
@@ -110,13 +104,13 @@ const lambdaHandler: AsrLambdaHandler = async (event, context, callback) => {
       const readAuthenticateArgs = (args as QueryReadAuthenticateArgs);
 
       const accessToken = readAuthenticateArgs.accessToken;
-      console.log("Got access token", accessToken);
       try {
         await accessTokenVerifier.verify(accessToken);
+        console.log("Access token verified.")
       }
       catch {
-        console.log("verification error");
-        returnResult(null);
+        console.log("Verification error when trying to authenticate a user.");
+        return null;
       }
 
       const decodedAccessToken = jwt_decode(accessToken) as DecodedAccessToken;
@@ -127,19 +121,18 @@ const lambdaHandler: AsrLambdaHandler = async (event, context, callback) => {
         username: decodedAccessToken.username,
       };
 
-      returnResult(authenticatedUser);
+      return authenticatedUser;
     }
     else if (fieldName === "readCollections") {
       // Return all collections.
-      const errorMessage = "Error fetching collections";
       try {
         const { Items: collections } = await dynamoDbDocumentClient.scan({
-          TableName: COLLECTION_TABLE,
+          TableName: agoraEnv.AGORA_COLLECTION_TABLE,
         });
-        returnResultIfExists(collections, `${errorMessage}.`);
+        return collections;
       }
       catch (err) {
-        returnError(`${errorMessage}: ${String(err)}`);
+        returnError(`Error reading collections: ${String(err)}`);
       }
     }
     else if (fieldName === "readCollection") {
@@ -148,13 +141,13 @@ const lambdaHandler: AsrLambdaHandler = async (event, context, callback) => {
 
       try {
         const { Item: collection } = await dynamoDbDocumentClient.get({
-          TableName: COLLECTION_TABLE,
+          TableName: agoraEnv.AGORA_COLLECTION_TABLE,
           Key: {
             id: id,
           },
         });
         // Return the collection we found or null to signal that we didn't find one.
-        returnResult(collection);
+        return collection;
       }
       catch (err) {
         returnError(`Error fetching collection with id ${id}: ${String(err)}`);
@@ -171,7 +164,7 @@ const lambdaHandler: AsrLambdaHandler = async (event, context, callback) => {
         await accessTokenVerifier.verify(accessToken);
       }
       catch {
-        returnResult(null);
+        return null;
       }
 
       const decodedAccessToken = jwt_decode(accessToken) as DecodedAccessToken;
@@ -202,7 +195,7 @@ const lambdaHandler: AsrLambdaHandler = async (event, context, callback) => {
 
         // Save the cast, making sure to add values for our global secondary indices.
         const putPromise = dynamoDbDocumentClient.put({
-          TableName: CAST_TABLE,
+          TableName: agoraEnv.AGORA_CAST_TABLE,
           Item: {
             collectionId: collectionBase.id,
             userId: decodedAccessToken.sub,
@@ -221,7 +214,7 @@ const lambdaHandler: AsrLambdaHandler = async (event, context, callback) => {
       // ...then store the collection.
       try {
         await dynamoDbDocumentClient.put({
-          TableName: COLLECTION_TABLE,
+          TableName: agoraEnv.AGORA_COLLECTION_TABLE,
           Item: collectionBase,
         });
       }
@@ -231,7 +224,7 @@ const lambdaHandler: AsrLambdaHandler = async (event, context, callback) => {
 
       // Now we must create the actual collection on the blockchain.
       const { Item: principal } = await dynamoDbDocumentClient.get({
-        TableName: PRINCIPAL_TABLE,
+        TableName: agoraEnv.AGORA_PRINCIPAL_TABLE,
         Key: {
           userId: decodedAccessToken.sub,
         },
@@ -268,14 +261,15 @@ const lambdaHandler: AsrLambdaHandler = async (event, context, callback) => {
         ...collectionBase,
         casts: savedCasts,
       };
-      returnResult(collection);
+      return collection;
     }
     else if (fieldName === "createUser") {
       const { username, password } = (args as MutationCreateUserArgs);
+
       try {
         // Try to sign up the user in cognito.
         const signUpResponse = await cognitoClient.signUp({
-          ClientId: USER_POOL_CLIENT_ID,
+          ClientId: agoraEnv.AGORA_USER_POOL_CLIENT_ID,
           SecretHash: calculateSecretHash(username),
           Username: username,
           Password: password,
@@ -286,7 +280,7 @@ const lambdaHandler: AsrLambdaHandler = async (event, context, callback) => {
         const principal = await stx.createPrincipal(password);
         try {
           await dynamoDbDocumentClient.put({
-            TableName: PRINCIPAL_TABLE,
+            TableName: agoraEnv.AGORA_PRINCIPAL_TABLE,
             Item: {
               publicAddress: principal.publicAddress,
               password: principal.password,
@@ -303,7 +297,7 @@ const lambdaHandler: AsrLambdaHandler = async (event, context, callback) => {
         // For now, we will confirm every user. In the future we may
         // wish to have users confirm their email address.
         await cognitoClient.adminConfirmSignUp({
-          UserPoolId: USER_POOL_ID,
+          UserPoolId: agoraEnv.AGORA_USER_POOL_ID,
           Username: username,
         });
 
@@ -314,7 +308,7 @@ const lambdaHandler: AsrLambdaHandler = async (event, context, callback) => {
             nfts: [],
           },
         };
-        returnResult(user);
+        return user;
       }
       catch (err) {
         returnError(`Error creating user: ${String(err)}.`);
@@ -325,8 +319,8 @@ const lambdaHandler: AsrLambdaHandler = async (event, context, callback) => {
 
       try {
         const initiateAuthResult = await cognitoClient.adminInitiateAuth({
-          ClientId: USER_POOL_CLIENT_ID,
-          UserPoolId: USER_POOL_ID,
+          ClientId: agoraEnv.AGORA_USER_POOL_CLIENT_ID,
+          UserPoolId: agoraEnv.AGORA_USER_POOL_ID,
           AuthFlow: AuthFlowType.ADMIN_USER_PASSWORD_AUTH,
           AuthParameters: {
             USERNAME: username,
@@ -343,20 +337,15 @@ const lambdaHandler: AsrLambdaHandler = async (event, context, callback) => {
             accessToken: accessToken,
             refreshToken: refreshToken,
           };
-          returnResult(session);
+          return session;
         }
         else {
           // Authentication worked but no tokens were created.
-          returnError("Authentication did not fail but tokens were not created.");
+          throw "Authentication did not fail but tokens were not created.";
         }
       }
       catch {
-        // Authentication failed.
-        const session: Session = {
-          accessToken: null,
-          refreshToken: null,
-        };
-        returnResult(session);
+        return null;
       }
     }
     else if (fieldName === "refreshSession") {
@@ -364,8 +353,8 @@ const lambdaHandler: AsrLambdaHandler = async (event, context, callback) => {
 
       try {
         const initiateAuthResult = await cognitoClient.adminInitiateAuth({
-          ClientId: USER_POOL_CLIENT_ID,
-          UserPoolId: USER_POOL_ID,
+          ClientId: agoraEnv.AGORA_USER_POOL_CLIENT_ID,
+          UserPoolId: agoraEnv.AGORA_USER_POOL_ID,
           AuthFlow: AuthFlowType.REFRESH_TOKEN_AUTH,
           AuthParameters: {
             REFRESH_TOKEN: inputRefreshToken,
@@ -381,21 +370,16 @@ const lambdaHandler: AsrLambdaHandler = async (event, context, callback) => {
             accessToken: accessToken,
             refreshToken: refreshToken,
           };
-          returnResult(session);
+          return session;
         }
         else {
           // Authentication worked but no tokens were created.
-          console.log("refresh psuedofail - ", initiateAuthResult);
-          returnError("Authentication did not fail but tokens were not created.");
+          throw "Authentication did not fail but tokens were not created.";
         }
       }
       catch {
         // Authentication failed.
-        const session: Session = {
-          accessToken: null,
-          refreshToken: null,
-        };
-        returnResult(session);
+        return null;
       }
     }
   }
@@ -403,17 +387,17 @@ const lambdaHandler: AsrLambdaHandler = async (event, context, callback) => {
     if (fieldName === "collections") {
       try {
         const { Items: collections } = await dynamoDbDocumentClient.query({
-          TableName: COLLECTION_TABLE,
+          TableName: agoraEnv.AGORA_COLLECTION_TABLE,
           IndexName: "userId_index",
           KeyConditionExpression: "userId = :uid",
           ExpressionAttributeValues: {
             ":uid": (source as AuthenticatedUser).userId,
           },
         });
-        returnResult(collections);
+        return collections;
       }
       catch {
-        returnError("Error fetching collections.");
+        throw "Error fetching collections.";
       }
     }
   }
@@ -423,7 +407,7 @@ const lambdaHandler: AsrLambdaHandler = async (event, context, callback) => {
       // a resolver for the cast data field because it will be stored in the cast table
       // and subject to the default resolver.
       const { Items: casts } = await dynamoDbDocumentClient.query({
-        TableName: CAST_TABLE,
+        TableName: agoraEnv.AGORA_CAST_TABLE,
         IndexName: "collectionId_index",
         KeyConditionExpression: "collectionId = :cid",
         ExpressionAttributeValues: {
@@ -431,16 +415,16 @@ const lambdaHandler: AsrLambdaHandler = async (event, context, callback) => {
         },
       });
 
-      returnResultIfExists(casts, "Error fetching casts.");
+      return casts;
     }
   }
   else {
-    returnError(`Invalid parentTypeName ${parentTypeName}.`);
+    throw `Invalid parentTypeName ${parentTypeName}.`;
   }
 
   // If we reach here, we have not yet called result or error
   // (synchronously) so we must report an error.
-  returnError(`No resolver found for field ${fieldName} from parent type ${parentTypeName}.`);
+  throw `No resolver found for field ${fieldName} from parent type ${parentTypeName}.`;
 
   // TODO: keep scanning until we get all the elements for reads.
   // TODO: use requested vars to limit scan for more efficiency
@@ -454,7 +438,10 @@ const lambdaHandler: AsrLambdaHandler = async (event, context, callback) => {
  * sign (HMAC) a message with that key.
  */
 function calculateSecretHashWithKey(message: string, key: string) {
-  return crypto.createHmac("sha256", key).update(message).update(USER_POOL_CLIENT_ID).digest("base64");
+  return crypto.createHmac("sha256", key)
+    .update(message)
+    .update(agoraEnv.AGORA_USER_POOL_CLIENT_ID)
+    .digest("base64");
 }
 
 /**
