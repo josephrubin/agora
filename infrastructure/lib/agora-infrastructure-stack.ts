@@ -9,16 +9,20 @@ import * as apprunner from "@aws-cdk/aws-apprunner";
 import { Duration } from "@aws-cdk/core";
 import { DockerImageAsset } from "@aws-cdk/aws-ecr-assets";
 
-interface InfrastructureStackProps extends cdk.StackProps {
+interface AgoraInfrastructureStackProps extends Omit<StackProps, "env"> {
+  // The DNS name that the Agora web app should be hosted at.
+  readonly webappDomainName: string;
   // Path to the file that contains the graphql schema for our API.
   readonly graphqlSchemaFile: string;
+  // Override the parent type to make env deeply required.
+  readonly env: Required<Environment>;
 }
 
 const QUERY_TYPE = "Query";
 const MUTATION_TYPE = "Mutation";
 
-export class InfrastructureStack extends cdk.Stack {
-  constructor(scope: cdk.Construct, id: string, props: InfrastructureStackProps) {
+export class AgoraInfrastructureStack extends cdk.Stack {
+  constructor(scope: cdk.Construct, id: string, props: AgoraInfrastructureStackProps) {
     super(scope, id, props);
 
     // The user pool for our app's auth.
@@ -227,16 +231,30 @@ export class InfrastructureStack extends cdk.Stack {
       fieldName: "collections",
     });
 
-    /** Our Remix container. */
-    /*
-    const imageAsset = new DockerImageAsset(this, "ImageAssets", {
-      directory: ".",
+    // ------------------------------------------------------------------------
+    // WWW (web app front end).
+    // ------------------------------------------------------------------------
+
+    const webappConstruct = new AgoraWebappConstruct(this, "AgoraWebappConstruct", {
+      domainName: props.webappDomainName,
+      dockerAppDirectory: ".",
+      dockerAppPort: 3000,
+      graphqlApi: graphqlConstruct.api,
+      presignedUrlApi: audioConstruct.audioPresignedUrlApi,
     });
-    new apprunner.Service(this, "AgoraService", {
-      source: apprunner.Source.fromAsset({
-        imageConfiguration: { port: 3000 },
-        asset: imageAsset,
-      }),
-    });*/
+
+    // ------------------------------------------------------------------------
+    // Output (results from this stack's synthesis).
+    // ------------------------------------------------------------------------
+
+    new CfnOutput(this, "AgoraGraphqlUrl", {
+      description: "The URL of the Agora internal GraphQL service.",
+      value: graphqlConstruct.api.graphqlUrl,
+    });
+
+    new CfnOutput(this, "AgoraGraphqlDevApiKey", {
+      description: "The development API key of the AgoraGraphGl API.",
+      value: graphqlConstruct.api.apiKey || "",
+    });
   }
 }
