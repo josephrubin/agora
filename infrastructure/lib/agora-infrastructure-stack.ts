@@ -1,13 +1,18 @@
-import * as cdk from "@aws-cdk/core";
-import * as appsync from "@aws-cdk/aws-appsync";
-import * as cognito from "@aws-cdk/aws-cognito";
-import * as dynamodb from "@aws-cdk/aws-dynamodb";
-import * as lambda from "@aws-cdk/aws-lambda";
-import * as nodelambda from "@aws-cdk/aws-lambda-nodejs";
-import * as iam from "@aws-cdk/aws-iam";
-import * as apprunner from "@aws-cdk/aws-apprunner";
-import { Duration } from "@aws-cdk/core";
-import { DockerImageAsset } from "@aws-cdk/aws-ecr-assets";
+import { Construct } from "constructs";
+import {
+  CfnOutput,
+  StackProps,
+  Duration,
+  Environment,
+  RemovalPolicy,
+  Stack,
+  aws_cognito as cognito,
+  aws_dynamodb as dynamodb,
+  aws_lambda as lambda,
+  aws_iam as iam
+} from "aws-cdk-lib";
+import * as appsync from "@aws-cdk/aws-appsync-alpha";
+import { AgoraWebappConstruct } from "./agora-webapp-construct";
 
 interface AgoraInfrastructureStackProps extends Omit<StackProps, "env"> {
   // The DNS name that the Agora web app should be hosted at.
@@ -21,8 +26,8 @@ interface AgoraInfrastructureStackProps extends Omit<StackProps, "env"> {
 const QUERY_TYPE = "Query";
 const MUTATION_TYPE = "Mutation";
 
-export class AgoraInfrastructureStack extends cdk.Stack {
-  constructor(scope: cdk.Construct, id: string, props: AgoraInfrastructureStackProps) {
+export class AgoraInfrastructureStack extends Stack {
+  constructor(scope: Construct, id: string, props: AgoraInfrastructureStackProps) {
     super(scope, id, props);
 
     // The user pool for our app's auth.
@@ -94,7 +99,7 @@ export class AgoraInfrastructureStack extends cdk.Stack {
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       // So as to not litter our account with tables.
       // TODO: change to RETAIN in production deployments.
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      removalPolicy: RemovalPolicy.DESTROY,
 
       contributorInsightsEnabled: true,
     });
@@ -116,7 +121,7 @@ export class AgoraInfrastructureStack extends cdk.Stack {
         type: dynamodb.AttributeType.STRING,
       },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      removalPolicy: RemovalPolicy.DESTROY,
       contributorInsightsEnabled: true,
     });
     // We want to be able to query this table by the collection
@@ -137,7 +142,7 @@ export class AgoraInfrastructureStack extends cdk.Stack {
         type: dynamodb.AttributeType.STRING,
       },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      removalPolicy: RemovalPolicy.DESTROY,
       contributorInsightsEnabled: true,
     });
 
