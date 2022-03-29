@@ -144,6 +144,9 @@ function Layout({ children }: { children: React.ReactNode }) {
               <li>
                 <Link to="/">Home</Link>
               </li>
+              <li>
+                <Link to="mint">Mint</Link>
+              </li>
               {
                 accessKey
                   ? (

@@ -32,6 +32,7 @@
     "@stacks/network": "^3.0.0",
     "@stacks/transactions": "^3.0.0",
     "@stacks/wallet-sdk": "^3.0.0",
+    "antd": "^4.19.3",
     "aws-cdk": "^1.134.0",
     "aws-jwt-verify": "^1.0.3",
     "concurrently": "^6.4.0",
@@ -42,6 +43,8 @@
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "remix": "^1.0.6",
+    "@solana/wallet-adapter-react": "^0.15.4",
+    "@solana/web3.js": "^1.37.0",
     "uuid": "^8.3.2"
   },
   "devDependencies": {
