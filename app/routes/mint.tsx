@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { Form, ActionFunction } from "remix";
 import { Button, Input, Upload } from "antd";
-// [ADD] import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { Connection } from "@metaplex/js";
 
 import { Art, MediaType } from "~/generated/graphql-schema";
+import { mintNFT } from "../actions/nft";
+import type { StringPublicKey, OnChainData, Creator } from "~/types";
 
 const { Dragger } = Upload;
 
@@ -21,8 +24,8 @@ export const action: ActionFunction = async ({ request }) => {
 }
 
 export default function Mint() {
-    // [ADD] const wallet = useWallet();
-    // [ADD] const connection = useConnection();
+    const wallet = useWallet();
+    const connection = new Connection('devnet');
 
     const [attributes, setAttributes] = useState<Art>({
         title: '',
@@ -30,19 +33,59 @@ export default function Mint() {
         mediaType: MediaType.Image,
         properties: {
             file: undefined,
-        }
+        },
+        image: ''
     });
 
-    const mint = () => {
-        console.log(attributes);
- 
-        /**
-         * const _nft = await mintNFT(
-         *  connection,
-         *  wallet,
-         * ...
-         * );
-         */
+    const mint = async () => {
+        console.log("Minting...");
+
+        /** 
+        const metadata = {
+            title: attributes.title,
+            description: attributes.description,
+            properties: {
+                file: attributes.properties.file
+            },
+            image: attributes.image
+        };
+        */
+
+        // ------ TODO: Right now, we mint the same NFT of a cat every time this function is called -------------
+        const creator: Creator = {
+            address: wallet?.publicKey?.toBase58(),
+            share: 100,
+            verified: 1
+        }
+
+        // A sample URI that points to a JSON file following Metaplex Token Metadata standard.
+        const DUMMY_ARWEAVE_METADATA_URI = 'https://ad46wdl5rjjowlu4yad7dxh3b2xfi7nyreudj2zzqt3dzuzob4.arweave.net/APnrDX2KUusunMAH8dz7Dq5UfbiJKDTrOYT2-PNMuDw/';
+
+        const data: OnChainData= {
+            symbol: "CAT",
+            name: "Cat",
+            uri: DUMMY_ARWEAVE_METADATA_URI,
+            sellerFeeBasisPoints: 0,
+            creators: [creator]
+        };
+
+
+        try {
+            const mintTxId = await mintNFT(
+                connection,
+                wallet,
+                data
+            );
+            if (mintTxId === "failed") {
+                alert(mintTxId);
+            } else {
+                const mintUrl = "https://explorer.solana.com/tx/" + mintTxId;
+                console.log("Congrats! The NFT is minted and should be confirmed on chain soon...");
+                console.log("Visit " + mintUrl + " in a few mins to check out your NFT 😎");
+            }
+        } catch (e: any) {
+            console.error(e.message);
+        }
     }
 
     return (
@@ -88,7 +131,8 @@ const UploadSection = (props: {
                         properties: {
                             ...props.attributes.properties,
                             file: file
-                        }
+                        },
+                        image: file.name || ''
                     });
                    }
                 }}
@@ -98,7 +142,8 @@ const UploadSection = (props: {
                         properties: {
                             ...props.attributes.properties,
                             file: undefined
-                        }
+                        },
+                        image: ''
                     })
                 }}
             >
