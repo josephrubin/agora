@@ -1,12 +1,12 @@
-import { Connection } from "@metaplex/js";
 import { Keypair, SystemProgram, PublicKey, Transaction } from "@solana/web3.js";
-import { MintLayout, TOKEN_PROGRAM_ID, Token } from "@solana/spl-token";
+import { Connection } from "@metaplex/js";
+import { MintLayout, TOKEN_PROGRAM_ID, createInitializeMintInstruction, getAssociatedTokenAddress, createAssociatedTokenAccountInstruction, createMintToInstruction } from "@solana/spl-token";
 import { WalletContextState } from "@solana/wallet-adapter-react";
 import { serialize } from "borsh";
 import BN from "bn.js";
 
 import { createMetadataInstruction, createMasterEditionInstruction } from "./nft_utils";
-import { OnChainData, METADATA_SCHEMA, CreateMetadataArgs, CreateMasterEditionArgs } from "~/types";
+import { Data, METADATA_SCHEMA, CreateMetadataArgs, CreateMasterEditionArgs } from "~/types";
 
 const sleep = (ms: number) => new Promise(resolve =>  setTimeout(resolve, ms));
 
@@ -19,7 +19,7 @@ const sleep = (ms: number) => new Promise(resolve =>  setTimeout(resolve, ms));
 export const mintNFT = async (
     connection: Connection,
     wallet: WalletContextState,
-    data: OnChainData,
+    data: Data,
 ): Promise<string>  => {
     const publicKey: any = wallet.publicKey;
 
@@ -53,38 +53,32 @@ export const mintNFT = async (
             programId: TOKEN_PROGRAM_ID,
         });
 
-        const initMintTx = Token.createInitMintInstruction(
-            TOKEN_PROGRAM_ID,
+        const initMintTx = createInitializeMintInstruction(
             mint.publicKey,
             0,
             publicKey,
-            publicKey
+            null
         );
 
-        const associatedTokenAccount = await Token.getAssociatedTokenAddress(
-            SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
-            TOKEN_PROGRAM_ID,
+        const associatedTokenAccount = await getAssociatedTokenAddress(
             mint.publicKey,
             publicKey,
             false
         ).catch();
 
-        const createAssociatedTokenAccountTx = Token.createAssociatedTokenAccountInstruction(
-            SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID,
-            TOKEN_PROGRAM_ID,
-            mint.publicKey,
+        const createAssociatedTokenAccountTx = createAssociatedTokenAccountInstruction(
+            publicKey,
             associatedTokenAccount,
             publicKey,
             mint.publicKey
         );
 
-        const mintToTx = Token.createMintToInstruction(
-            TOKEN_PROGRAM_ID,
+        const mintToTx = createMintToInstruction(
             mint.publicKey,
             associatedTokenAccount,
             publicKey, // Mint authority
+            1, // mint only one token...this makes it "non-fungible"
             [],
-            1 // mint only one token...this makes it "non-fungible"
         );
 
         console.log("Created new mint and token holder account txs...");

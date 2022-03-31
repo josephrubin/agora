@@ -30,8 +30,6 @@ export type OnChainData = {
     creators: Creator[] | null;
 }
 
-
-
 /** These classes are used to create the METADATA_SCHEMA below, which is serialized and put into the metadata account on Solana
  * Adopted from https://github.com/penta-fun/sol-nft-tools/blob/main/util/mint/schema.ts
  */

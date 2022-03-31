@@ -14,6 +14,7 @@ import type { LinksFunction } from "remix";
 
 import globalStylesUrl from "~/styles/global.css";
 import darkStylesUrl from "~/styles/dark.css";
+import walletStylesUrl from "~/styles/wallet.css";
 import { getAccessToken, getUserSession } from "./modules/users.server";
 
 // https://remix.run/api/app#links
@@ -25,6 +26,10 @@ export const links: LinksFunction = () => {
       href: darkStylesUrl,
       media: "(prefers-color-scheme: dark)",
     },
+    {
+      rel: "stylesheet",
+      href: walletStylesUrl,
+    }
   ];
 };
 
