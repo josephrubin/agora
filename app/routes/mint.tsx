@@ -48,7 +48,6 @@ export default function Mint() {
             <WalletProvider wallets={wallets} autoConnect>
                 <WalletModalProvider>
                     <WalletMultiButton />
-                    <br />
                     <WalletDisconnectButton />
                     <MintComponent />
                 </WalletModalProvider>

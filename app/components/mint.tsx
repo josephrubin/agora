@@ -1,19 +1,17 @@
 import { useState } from "react";
 import { Button, Form, Input, Upload } from "antd";
-import { Connection } from "@metaplex/js";
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { WalletNotConnectedError } from "@solana/wallet-adapter-base";
 
 import { Art, MediaType } from "~/generated/graphql-schema";
 import { mintNFT } from "../actions/nft";
-import type { OnChainData, Creator } from "~/types";
 import { Data, CreatorClass } from "~/types";
 
 const { Dragger } = Upload;
 
 export default function Mint() {
+    const { connection } = useConnection();
     const wallet = useWallet();
-    const connection = new Connection('devnet');
 
     const [attributes, setAttributes] = useState<Art>({
         title: '',
@@ -52,13 +50,12 @@ export default function Mint() {
         const DUMMY_ARWEAVE_METADATA_URI = 'https://ad46wdl5rjjowlu4yad7dxh3b2xfi7nyreudj2zzqt3dzuzob4.arweave.net/APnrDX2KUusunMAH8dz7Dq5UfbiJKDTrOYT2-PNMuDw/';
 
         const data = new Data({
-            symbol: "CAT",
-            name: "Cat",
+            symbol: "COOLCAT",
+            name: "Cool Cat",
             uri: DUMMY_ARWEAVE_METADATA_URI,
             sellerFeeBasisPoints: 0,
             creators: [creator]
         });
-
 
         try {
             const mintTxId = await mintNFT(
@@ -69,7 +66,7 @@ export default function Mint() {
             if (mintTxId === "failed") {
                 alert(mintTxId);
             } else {
-                const mintUrl = "https://explorer.solana.com/tx/" + mintTxId;
+                const mintUrl = "https://explorer.solana.com/tx/" + mintTxId + "?cluster=devnet";
                 console.log("Congrats! The NFT is minted and should be confirmed on chain soon...");
                 console.log("Visit " + mintUrl + " in a few mins to check out your NFT 😎");
             }

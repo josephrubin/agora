@@ -1,20 +1,34 @@
-import { Keypair, SystemProgram, PublicKey, Transaction } from "@solana/web3.js";
-import { Connection } from "@metaplex/js";
-import { MintLayout, TOKEN_PROGRAM_ID, createInitializeMintInstruction, getAssociatedTokenAddress, createAssociatedTokenAccountInstruction, createMintToInstruction } from "@solana/spl-token";
+import { 
+    Keypair, 
+    SystemProgram, 
+    PublicKey, 
+    Transaction, 
+    Connection 
+} from "@solana/web3.js";
+import { 
+    MintLayout, 
+    TOKEN_PROGRAM_ID, 
+    createInitializeMintInstruction, 
+    getAssociatedTokenAddress, 
+    createAssociatedTokenAccountInstruction, 
+    createMintToInstruction 
+} from "@solana/spl-token";
 import { WalletContextState } from "@solana/wallet-adapter-react";
 import { serialize } from "borsh";
 import BN from "bn.js";
 
-import { createMetadataInstruction, createMasterEditionInstruction } from "./nft_utils";
+import { createMetadataInstruction, createMasterEditionInstruction } from "../utils/nft";
 import { Data, METADATA_SCHEMA, CreateMetadataArgs, CreateMasterEditionArgs } from "~/types";
+import { extendBorsh } from "~/utils/borsh";
 
 const sleep = (ms: number) => new Promise(resolve =>  setTimeout(resolve, ms));
+extendBorsh();
 
-/** Mints an NFT and returns its transaction ID 
+/** Mints an NFT and returns the id of the chained transactions
  * @param connection a connection to an RPC Solana node 
- * @param wallet the wallet signing the txs to mint the NFT
+ * @param wallet the wallet signing the tx
  * @param data data put on-chain for creating an SPL token
- * @returns the transaction ID of the minted NFT if successful, and "failed" otherwise
+ * @returns the transaction ID if successful, and "failed" otherwise
  */
 export const mintNFT = async (
     connection: Connection,
@@ -23,11 +37,7 @@ export const mintNFT = async (
 ): Promise<string>  => {
     const publicKey: any = wallet.publicKey;
 
-    // See https://spl.solana.com/associated-token-account
-    const SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID: PublicKey = new PublicKey(
-        'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
-      );
-    
+    // Location of the Metaplex Token Metadata Program 
     const METAPLEX_PROGRAM_ID = new PublicKey(
         'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s'
     );
@@ -36,15 +46,12 @@ export const mintNFT = async (
 
         const mint = new Keypair();
 
-        /** Following these steps to create a non-fungible SPL token:
+        /** Part 1: Following these steps to create a non-fungible SPL token:
          *  https://spl.solana.com/token#example-create-a-non-fungible-token
          */
 
-
-
         const mintRent = await connection.getMinimumBalanceForRentExemption(MintLayout.span);
 
-        // tx #1: Create a mint account that stores our SPL token-creation program
         const createMintAccountTx = SystemProgram.createAccount({
             fromPubkey: publicKey,
             newAccountPubkey: mint.publicKey,
@@ -81,10 +88,12 @@ export const mintNFT = async (
             [],
         );
 
-        console.log("Created new mint and token holder account txs...");
+        console.log("Created new mint and token holder accounts...");
 
-        // In the next section we need to create a bunch of buffers of the Metaplex Metadata program
-        // See https://gist.github.com/dietmerc/f2cd3038bb901c91b0c9eb38f6577dc2#step-3-derive-pdas-for-the-nft-accounts
+        /** Part 2: Derive PDAs for the mint account
+         * See https://gist.github.com/dietmerc/f2cd3038bb901c91b0c9eb38f6577dc2#step-3-derive-pdas-for-the-nft-accounts
+        */ 
+
         const metadataSeeds = [
             Buffer.from("metadata"),
             METAPLEX_PROGRAM_ID.toBuffer(),
@@ -113,7 +122,6 @@ export const mintNFT = async (
             )
         );
 
-        // Create metadata account transaction
         const createMetadataTx = createMetadataInstruction(
             metadataAccount,
             mint.publicKey,
@@ -140,9 +148,12 @@ export const mintNFT = async (
             buffer
         );
 
-        console.log("Created metadata and masteredition txs...");
+        console.log("Created metadata and masteredition tx instructions...");
 
-        // Get hash of the latest block on whatever network you're connected to
+        /** Part 3: Add instructions to a Transaction() object, sign with wallet and mint account pubkey, and send tx
+         *  See end of https://github.com/solana-labs/oyster/blob/main/packages/common/src/contracts/token.ts
+         */
+
         let blockhashStruct;
         while (!blockhashStruct) {
             try {
@@ -154,8 +165,8 @@ export const mintNFT = async (
         }
 
         let tx = new Transaction({
-            recentBlockhash: blockhashStruct?.blockhash,
-            feePayer: publicKey,
+            recentBlockhash: blockhashStruct.blockhash,
+            feePayer: publicKey
         })
             .add(createMintAccountTx)
             .add(initMintTx)
@@ -163,14 +174,22 @@ export const mintNFT = async (
             .add(mintToTx)
             .add(createMetadataTx)
             .add(createMasterEditionTx);
-        
-        await tx.sign(mint);
+ 
+        const signers = [mint];
+        tx.setSigners(wallet.publicKey, ...signers.map(s => s.publicKey));
+        if (signers.length > 0) {
+            tx.partialSign(...signers);
+        }
+        tx = await wallet.signTransaction(tx);
+        const rawTransaction = tx.serialize();
+        let options = {
+            skipPreflight: true,
+            commitment: 'singleGossip',
+        };
 
-        console.log("Signed all transactions...");
+        const txId = await connection.sendRawTransaction(rawTransaction, options);
 
-        const txId = await wallet.sendTransaction(tx, connection);
-
-        console.log("Sent transactions to network...transaction id is: " + txId);
+        console.log("Sent transaction to network...transaction id is: " + txId);
 
         return txId;
 
