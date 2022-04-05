@@ -6,6 +6,7 @@ import { WalletNotConnectedError } from "@solana/wallet-adapter-base";
 import { Art, MediaType } from "~/generated/graphql-schema";
 import { mintNFT } from "../actions/nft";
 import { Data, CreatorClass } from "~/types";
+import { tryImageUpload } from "../utils/ipfs";
 
 const { Dragger } = Upload;
 
@@ -26,9 +27,7 @@ export default function Mint() {
     const mint = async () => {
         if (!wallet.publicKey) throw new WalletNotConnectedError();
 
-        console.log("Minting...");
-
-        /** 
+        
         const metadata = {
             title: attributes.title,
             description: attributes.description,
@@ -37,7 +36,6 @@ export default function Mint() {
             },
             image: attributes.image
         };
-        */
 
         // ------ TODO: Right now, we mint the same NFT of a cat every time this function is called -------------
         const creator = new CreatorClass({
@@ -48,15 +46,20 @@ export default function Mint() {
 
         // A sample URI that points to a JSON file following Metaplex Token Metadata standard.
         const DUMMY_ARWEAVE_METADATA_URI = 'https://ad46wdl5rjjowlu4yad7dxh3b2xfi7nyreudj2zzqt3dzuzob4.arweave.net/APnrDX2KUusunMAH8dz7Dq5UfbiJKDTrOYT2-PNMuDw/';
+        const symbol = metadata.title.toUpperCase().replace(" ", "");
 
         const data = new Data({
-            symbol: "COOLCAT",
-            name: "Cool Cat",
+            symbol: symbol,
+            name: metadata.title,
             uri: DUMMY_ARWEAVE_METADATA_URI,
             sellerFeeBasisPoints: 0,
             creators: [creator]
         });
+        console.log(data);
 
+        tryImageUpload();
+
+        /**
         try {
             const mintTxId = await mintNFT(
                 connection,
@@ -73,6 +76,7 @@ export default function Mint() {
         } catch (e: any) {
             console.error(e.message);
         }
+        */
     }
 
     return (

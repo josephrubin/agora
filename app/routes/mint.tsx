@@ -47,9 +47,18 @@ export default function Mint() {
         <ConnectionProvider endpoint={endpoint}>
             <WalletProvider wallets={wallets} autoConnect>
                 <WalletModalProvider>
-                    <WalletMultiButton />
-                    <WalletDisconnectButton />
-                    <MintComponent />
+                    <div>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '5px'}}>
+                            <div style={{ margin: '10px' }}>
+                                <WalletMultiButton />
+                            </div>
+                            <div style={{ margin: '10px' }}>
+                                <WalletDisconnectButton />
+                            </div>
+                            
+                        </div>
+                        <MintComponent />
+                    </div>
                 </WalletModalProvider>
             </WalletProvider>
         </ConnectionProvider>
