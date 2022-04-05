@@ -36,11 +36,6 @@ type Mutation {
   refreshSession(username: String!, refreshToken: String!): Session!
 }
 
-"""Various points of metadata that our types might store."""
-type Metadata {
-  createdAt: String
-}
-
 """The type of media or data stored in the NFTs represented by a collection."""
 enum MediaType {
   """Images are natively stored in the NFTs.""" 
