@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Form, ActionFunction, redirect, useMatches } from "remix";
-import { AssignmentType, CollectionInput, MediaType } from "~/generated/graphql-schema";
-import { createCollection } from "~/modules/collections.server";
+import { CastInput } from "~/generated/graphql-schema";
+import { createCast, exportCast, reorderCast, transferCast, readCast, readCasts } from "~/modules/casts.server";
 import { getAccessToken } from "~/modules/users.server";
 
 /* Submit a new collection to the server. */
@@ -14,6 +14,7 @@ export const action: ActionFunction = async ({ request }) => {
     return "error";
   }
 
+  /*
   const uris = formData.getAll("uri");
 
   const collectionInput: CollectionInput = {
@@ -34,7 +35,7 @@ export const action: ActionFunction = async ({ request }) => {
   const collection = await createCollection({accessToken: accessToken!, input: collectionInput});
   console.log(collection);
 
-  return redirect(`/collections/${collection.id}`);
+  return redirect(`/collections/${collection.id}`);*/
 };
 
 export default function NewComponentLayout() {
