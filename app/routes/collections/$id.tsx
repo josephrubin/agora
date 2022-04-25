@@ -1,8 +1,8 @@
 import { useCatch, useLoaderData, LoaderFunction } from "remix";
-import { readCollection } from "~/modules/collections.server";
+import { readCast } from "~/modules/casts.server";
 
 export const loader: LoaderFunction = async function loader({ params }) {
-  const collection = await readCollection(params.id);
+  const collection = await readCast("TODO", params.id!);
 
   if (!collection) {
     throw new Response("Collection not found", { status: 404 });
@@ -13,7 +13,8 @@ export const loader: LoaderFunction = async function loader({ params }) {
 
 export default function IdLayout() {
   const data = useLoaderData();
-
+  return <div></div>;
+  /*
   return (
     <div>
       The nested id route, with id: {data.id}, title: {data.title} of size {data.size}.
@@ -29,7 +30,7 @@ export default function IdLayout() {
       </ol>
 
     </div>
-  );
+  );*/
 }
 
 export function CatchBoundary() {
