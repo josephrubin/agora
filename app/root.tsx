@@ -7,7 +7,7 @@ import {
   Scripts,
   ScrollRestoration,
   useCatch,
-  useLoaderData,
+  useLoaderData
 } from "remix";
 
 import styles from "./tailwind.css";

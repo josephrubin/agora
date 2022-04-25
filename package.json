@@ -19,7 +19,7 @@
     "codegen": "graphql-codegen --config codegen.yaml",
     "wcodegen": "graphql-codegen --config codegen.yaml --watch",
     "prebuild": "npm run codegen",
-    "generate:css": "npx tailwindcss -i ./app/styles/tailwind.css -o ./app/tailwind.css"
+    "generate:css": "tailwindcss -m -i ./app/styles/tailwind.css -o app/tailwind.css"
   },
   "dependencies": {
     "@aws-cdk/aws-appsync-alpha": "^2.3.0-alpha.0",

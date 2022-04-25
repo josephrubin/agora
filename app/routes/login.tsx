@@ -32,8 +32,9 @@ export default function Login() {
   }
 
   return (
-    <div>
-      <h1>Agora</h1>
+    <div className="flex flex-col items-center gap-8 my-16">
+      <h1 className="title">Agora</h1>
+      <h2>Your Community NFT Hub!</h2>
       <Form method="post">
         <label>
           Username
