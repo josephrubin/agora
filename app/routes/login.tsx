@@ -35,19 +35,14 @@ export default function Login() {
     <div className="flex flex-col items-center gap-8 my-16">
       <h1 className="title">Agora</h1>
       <h2>Your Community NFT Hub!</h2>
-      <Form method="post">
-        <label>
-          Username
-          <input name="username" type="text" />
-        </label>
-        <br />
-        <label>
-          Password
-          <input name="password" type="password" />
-        </label>
-        <br />
-        <br />
-        <input type="submit" value="Start session" />
+      <Form method="post" className="flex flex-col gap-y-4 items-center">
+        <div>
+          <input name="username" type="text" placeholder="Email Address" />
+        </div>
+        <div>
+          <input name="password" type="password" placeholder="Password" />
+        </div>
+        <input type="submit" value="Log In" />
       </Form>
     </div>
   );

@@ -1,7 +1,14 @@
+/* eslint-disable */
+const defaultTheme = require("tailwindcss/defaultTheme");
+
 module.exports = {
   content: ["./app/**/*.{ts,tsx,jsx,js}"],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        sans: ["Proxima Nova", ...defaultTheme.fontFamily.sans],
+      },
+    },
   },
   plugins: [],
 };

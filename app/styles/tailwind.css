@@ -11,8 +11,22 @@
     @apply text-2xl;
     @apply font-bold;
   }
+  input {
+    @apply p-2;
+    @apply rounded-md;
+  }
+  input[type=submit] {
+    @apply button;
+  }
   .title {
     @apply text-8xl;
     @apply font-thin;
+  }
+  .button {
+    @apply rounded-lg;
+    @apply border-2;
+    @apply w-fit;
+    @apply px-4;
+    @apply hover:bg-zinc-800
   }
 }
