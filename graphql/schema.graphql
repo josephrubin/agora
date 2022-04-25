@@ -21,8 +21,8 @@ type Mutation {
   reorderCast(accessToken: String!, id: ID!, index: Int!): Cast
   """Transfer a cast to the given username. Returns the cast if successful, else null."""
   transferCast(accessToken: String!, id: ID!, username: String!): Cast
-  """Export a Cast to an NFT on the blockchain. This cast will be deleted. Returns the cast if successful, else null."""
-  exportCast(accessToken: String!, id: ID!): Cast
+  """Export a Cast to an NFT on the blockchain for the given address. This cast will be deleted. Returns the resultant NFT or null."""
+  exportCast(accessToken: String!, id: ID!, address: String!): Nft
 
   """
   Create a new user (sign up). As is standard, user/pass are passed over
@@ -89,7 +89,11 @@ type AuthenticatedUser {
   """The verified claimed username."""
   username: String!
 
+  """All of this user's casts."""
   casts: [Cast!]!
+  """Read a specific cast by id, or null if not found"""
+  readCast(id: ID!): Cast
+  """The user behind this authenticated user."""
   user: User!
 }
 
@@ -108,7 +112,7 @@ type Session {
 
 """Representation of an actual NFT that's on the blockchain."""
 type Nft {
-  """These properties subject to change."""
+  """These properties subject to change. TODO: Should add contract address."""
   mimeType: String!
   uri: String!
 }
