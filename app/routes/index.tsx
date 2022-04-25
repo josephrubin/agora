@@ -22,7 +22,7 @@ export default function Index() {
     <div className="remix__page">
       <main>
         <h2>Welcome to RoJo App!</h2>
-        <p>It's gonna be a good time 🥳</p>
+        <p>It&apos;s gonna be a good time 🥳</p>
         <p>
           This app makes it easy for communities to create NFT collections and
           award them to users.

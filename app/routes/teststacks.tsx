@@ -1,4 +1,4 @@
-import { Form } from "remix";
+/* import { Form } from "remix";
 import { createNftClass } from "../../graphql/resolvers/stacks";
 
 export const action = async () => {
@@ -16,3 +16,4 @@ export default function TestStacks() {
     </Form>
   );
 }
+ */
