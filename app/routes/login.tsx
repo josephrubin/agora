@@ -37,10 +37,10 @@ export default function Login() {
       <h2>Your Community NFT Hub!</h2>
       <Form method="post" className="flex flex-col gap-y-4 items-center">
         <div>
-          <input name="username" type="text" placeholder="Email Address" />
+          <input className="w-80" name="username" type="text" placeholder="Email Address" />
         </div>
         <div>
-          <input name="password" type="password" placeholder="Password" />
+          <input className="w-80" name="password" type="password" placeholder="Password" />
         </div>
         <input type="submit" value="Log In" />
       </Form>

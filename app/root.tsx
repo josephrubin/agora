@@ -131,7 +131,7 @@ function Layout({ children }: { children: React.ReactNode }) {
           <nav aria-label="Main navigation">
             <ul className="flex flex-row gap-8">
               <li>
-                <Link to="/">Home</Link>
+                <Link to="/home">Home</Link>
               </li>
               {accessKey ? (
                 <li>
