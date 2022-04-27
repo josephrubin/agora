@@ -3,7 +3,7 @@
  * all queries and mutations.
  */
 
-import { Cast, Collection, Mutation, MutationCreateCollectionArgs, MutationCreateSessionArgs, MutationCreateUserArgs, QueryReadCollectionArgs, User, Session, MutationRefreshSessionArgs, QueryReadAuthenticateArgs, AuthenticatedUser, Principal } from "~/generated/graphql-schema";
+import { Cast, Mutation, MutationCreateSessionArgs, MutationCreateUserArgs, User, Session, MutationRefreshSessionArgs, QueryReadAuthenticateArgs, AuthenticatedUser, AuthenticatedUserReadCastArgs } from "~/generated/graphql-schema";
 import { AsrLambdaHandler, DecodedAccessToken } from "./appsync-resolver-types";
 import { DynamoDB } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocument } from "@aws-sdk/lib-dynamodb";
@@ -13,8 +13,9 @@ import { error } from "aws-cdk/lib/logging";
 import * as crypto from "crypto";
 import { NoUnusedVariablesRule } from "graphql";
 import { CognitoJwtVerifier } from "aws-jwt-verify";
-import * as stx from "./stacks";
 import jwt_decode from "jwt-decode";
+
+// TODO: add mutations for dealing with casts.
 
 // See https://github.com/aws/aws-sdk-js-v3/tree/main/lib/lib-dynamodb.
 
@@ -23,9 +24,7 @@ import jwt_decode from "jwt-decode";
 interface AgoraEnv {
   readonly AGORA_DYNAMODB_REGION: string;
   readonly AGORA_COGNITO_REGION: string;
-  readonly AGORA_COLLECTION_TABLE: string;
   readonly AGORA_CAST_TABLE: string;
-  readonly AGORA_PRINCIPAL_TABLE: string;
   readonly AGORA_USER_POOL_ID: string;
   readonly AGORA_USER_POOL_CLIENT_ID: string;
 }
@@ -106,7 +105,7 @@ const lambdaHandler: AsrLambdaHandler = async (event) => {
       const accessToken = readAuthenticateArgs.accessToken;
       try {
         await accessTokenVerifier.verify(accessToken);
-        console.log("Access token verified.")
+        console.log("Access token verified.");
       }
       catch {
         console.log("Verification error when trying to authenticate a user.");
@@ -115,7 +114,7 @@ const lambdaHandler: AsrLambdaHandler = async (event) => {
 
       const decodedAccessToken = jwt_decode(accessToken) as DecodedAccessToken;
 
-      const authenticatedUser: Omit<AuthenticatedUser, "user" | "collections"> = {
+      const authenticatedUser: Omit<AuthenticatedUser, "user" | "casts"> = {
         accessToken: accessToken,
         userId: decodedAccessToken.sub,
         username: decodedAccessToken.username,
@@ -123,147 +122,9 @@ const lambdaHandler: AsrLambdaHandler = async (event) => {
 
       return authenticatedUser;
     }
-    else if (fieldName === "readCollections") {
-      // Return all collections.
-      try {
-        const { Items: collections } = await dynamoDbDocumentClient.scan({
-          TableName: agoraEnv.AGORA_COLLECTION_TABLE,
-        });
-        return collections;
-      }
-      catch (err) {
-        returnError(`Error reading collections: ${String(err)}`);
-      }
-    }
-    else if (fieldName === "readCollection") {
-      // Return a single collection by id.
-      const { id } = args as QueryReadCollectionArgs;
-
-      try {
-        const { Item: collection } = await dynamoDbDocumentClient.get({
-          TableName: agoraEnv.AGORA_COLLECTION_TABLE,
-          Key: {
-            id: id,
-          },
-        });
-        // Return the collection we found or null to signal that we didn't find one.
-        return collection;
-      }
-      catch (err) {
-        returnError(`Error fetching collection with id ${id}: ${String(err)}`);
-      }
-    }
   }
   else if (parentTypeName === "Mutation") {
-    if (fieldName === "createCollection") {
-      const createCollectionArgs = (args as MutationCreateCollectionArgs);
-
-      // Ensure that the caller is verified.
-      const accessToken = createCollectionArgs.accessToken;
-      try {
-        await accessTokenVerifier.verify(accessToken);
-      }
-      catch {
-        return null;
-      }
-
-      const decodedAccessToken = jwt_decode(accessToken) as DecodedAccessToken;
-
-      // Create a new collection object without custom nested types that we need to
-      // store elsewhere (such as casts).
-      const collectionBase = objectWithoutKeys({
-        id: uuidv4(),
-        userId: decodedAccessToken.sub,
-        ...createCollectionArgs.input,
-      }, ["casts"]);
-
-      // First store the nested casts in DynamoDB...
-      const savedCasts: Cast[] = [];
-      const storeCastPromises = [];
-      for (let i = 0; i < createCollectionArgs.input.casts.length; i++) {
-        const castInput = createCollectionArgs.input.casts[i];
-
-        // Create a new cast object for each cast in the input, assign it the input
-        // data, and give it some default values.
-        const cast: Cast = {
-          id: uuidv4(),
-          isClaimed: false,
-          assignedPrincipal: null,
-          ...castInput,
-        };
-        savedCasts.push(cast);
-
-        // Save the cast, making sure to add values for our global secondary indices.
-        const putPromise = dynamoDbDocumentClient.put({
-          TableName: agoraEnv.AGORA_CAST_TABLE,
-          Item: {
-            collectionId: collectionBase.id,
-            userId: decodedAccessToken.sub,
-            ...cast,
-          },
-        });
-        storeCastPromises.push(putPromise);
-      }
-      try {
-        await Promise.all(storeCastPromises);
-      }
-      catch (err) {
-        error("Error storing at least one cast.");
-      }
-
-      // ...then store the collection.
-      try {
-        await dynamoDbDocumentClient.put({
-          TableName: agoraEnv.AGORA_COLLECTION_TABLE,
-          Item: collectionBase,
-        });
-      }
-      catch (err) {
-        error(`Error storing collection with id ${collectionBase.id}.`);
-      }
-
-      // Now we must create the actual collection on the blockchain.
-      const { Item: principal } = await dynamoDbDocumentClient.get({
-        TableName: agoraEnv.AGORA_PRINCIPAL_TABLE,
-        Key: {
-          userId: decodedAccessToken.sub,
-        },
-      });
-      if (!principal) {
-        returnError("Could not retrieve user's principal.");
-      }
-      const classResponse = await stx.createNftClass(principal as Principal, createCollectionArgs.input.title);
-      console.log("Create NFT class response:", classResponse);
-
-      if (!classResponse.error) {
-        // The NFT class created successfully. We now want to create the NFTs themselves.
-        console.log("Looks like the NFT class was created.");
-        console.log("Attempting to create NFTs.");
-
-        const lastClass = await stx.readFromContract(principal as Principal, "read-class-count", []) - 1;
-        console.log("Attempt to read from contract. Got back", lastClass);
-
-        for (const cast in savedCasts) {
-          if (Object.prototype.hasOwnProperty.call(savedCasts, cast)) {
-            const element = savedCasts[cast];
-
-            await stx.createNft(lastClass, element.data.uri, principal as Principal);
-            console.log("Attempt to create NFT in class.");
-          }
-        }
-      }
-
-      // We also have to return the new Collection that we created with the mutation.
-      // We've been saving this information in RAM so we can do it easily. Note that
-      // we may be tempted to just recurse on a Query, but DynamoDB is only eventually
-      // consistent so that might not even work anyway.
-      const collection: Collection = {
-        ...collectionBase,
-        casts: savedCasts,
-      };
-      return collection;
-    }
-    else if (fieldName === "createUser") {
+    if (fieldName === "createUser") {
       const { username, password } = (args as MutationCreateUserArgs);
 
       try {
@@ -275,25 +136,6 @@ const lambdaHandler: AsrLambdaHandler = async (event) => {
           Password: password,
         });
 
-        // Now that the user has been signed up, generate and store the user's
-        // new Principal.
-        const principal = await stx.createPrincipal(password);
-        try {
-          await dynamoDbDocumentClient.put({
-            TableName: agoraEnv.AGORA_PRINCIPAL_TABLE,
-            Item: {
-              publicAddress: principal.publicAddress,
-              password: principal.password,
-              secretKey: principal.secretKey,
-              stxPrivateKey: principal.stxPrivateKey,
-              userId: signUpResponse.UserSub,
-            },
-          });
-        }
-        catch (err) {
-          error(`Error storing Principal for user ${signUpResponse.UserSub}.`);
-        }
-
         // For now, we will confirm every user. In the future we may
         // wish to have users confirm their email address.
         await cognitoClient.adminConfirmSignUp({
@@ -303,10 +145,6 @@ const lambdaHandler: AsrLambdaHandler = async (event) => {
 
         const user: User = {
           username: username,
-          principal: {
-            ...principal,
-            nfts: [],
-          },
         };
         return user;
       }
@@ -336,6 +174,7 @@ const lambdaHandler: AsrLambdaHandler = async (event) => {
           const session: Session = {
             accessToken: accessToken,
             refreshToken: refreshToken,
+            username: username,
           };
           return session;
         }
@@ -369,6 +208,7 @@ const lambdaHandler: AsrLambdaHandler = async (event) => {
           const session: Session = {
             accessToken: accessToken,
             refreshToken: refreshToken,
+            username: username,
           };
           return session;
         }
@@ -384,38 +224,36 @@ const lambdaHandler: AsrLambdaHandler = async (event) => {
     }
   }
   else if (parentTypeName === "AuthenticatedUser") {
-    if (fieldName === "collections") {
+    if (fieldName === "casts") {
       try {
-        const { Items: collections } = await dynamoDbDocumentClient.query({
-          TableName: agoraEnv.AGORA_COLLECTION_TABLE,
+        const { Items: casts } = await dynamoDbDocumentClient.query({
+          TableName: agoraEnv.AGORA_CAST_TABLE,
           IndexName: "userId_index",
           KeyConditionExpression: "userId = :uid",
           ExpressionAttributeValues: {
             ":uid": (source as AuthenticatedUser).userId,
           },
         });
-        return collections;
+        return casts;
       }
       catch {
-        throw "Error fetching collections.";
+        throw "Error fetching casts.";
       }
     }
-  }
-  else if (parentTypeName === "Collection") {
-    if (fieldName === "casts") {
-      // Return all casts in the parent collection. There's no need to define
-      // a resolver for the cast data field because it will be stored in the cast table
-      // and subject to the default resolver.
-      const { Items: casts } = await dynamoDbDocumentClient.query({
-        TableName: agoraEnv.AGORA_CAST_TABLE,
-        IndexName: "collectionId_index",
-        KeyConditionExpression: "collectionId = :cid",
-        ExpressionAttributeValues: {
-          ":cid": (source as TypeWithId).id,
-        },
-      });
-
-      return casts;
+    else if (fieldName === "readCast") {
+      try {
+        const { Item: cast } = await dynamoDbDocumentClient.get({
+          TableName: agoraEnv.AGORA_CAST_TABLE,
+          Key: {
+            userId: (source as AuthenticatedUser).userId,
+            id: (args as AuthenticatedUserReadCastArgs).id,
+          },
+        });
+        return cast;
+      }
+      catch {
+        throw "Error fetching cast.";
+      }
     }
   }
   else {
@@ -442,18 +280,6 @@ function calculateSecretHashWithKey(message: string, key: string) {
     .update(message)
     .update(agoraEnv.AGORA_USER_POOL_CLIENT_ID)
     .digest("base64");
-}
-
-/**
- * Returns the source object with the specified keys removed.
- * Respects the types to produce a correctly typed output. We use
- * a cast or two (this can be avoided with more clever type
- * metaprogramming) but this should be valid and is much simpler.
- */
-function objectWithoutKeys<T extends object, K extends keyof T>(source: T, keysToRemove: K[]): Omit<T, K> {
-  return Object.fromEntries(
-    Object.entries(source).filter(([key, _value]) => !keysToRemove.includes(key as K))
-  ) as Omit<T, K>;
 }
 
 exports.lambdaHandler = lambdaHandler;

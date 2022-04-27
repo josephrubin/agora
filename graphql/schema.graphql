@@ -51,6 +51,9 @@ type Cast {
   # The location of the Cast's data. Usually an IPFS URL.
   uri: String!
 
+  # The centralized location of the Cast's data. This may be a URL into our storage.
+  centralizedUri: String!
+
   # The transaction history of this NFT.
   history: [HistoryItem!]!
 }

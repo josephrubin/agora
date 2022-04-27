@@ -10,6 +10,10 @@ export async function readCasts(args: QueryReadAuthenticateArgs): Promise<Cast[]
       epoch: "4324141",
       event: "transfer",
       target: "jojois74",
+    }, {
+      epoch: "43523523",
+      event: "export",
+      target: "0xqury493nyrtnwtyopwihvt34",
     }],
   }];
   return Promise.resolve(mockData.concat(mockData, mockData));

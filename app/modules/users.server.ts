@@ -88,7 +88,6 @@ export function getUserSession(request: Request) {
 
 export async function getAccessToken(request: Request) {
   const session = await getUserSession(request);
-  console.log("session?", session);
   const accessKey = session.get("accessToken");
   if (!accessKey || typeof accessKey !== "string") return null;
   return accessKey;

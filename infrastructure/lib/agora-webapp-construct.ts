@@ -36,11 +36,11 @@ export class AgoraWebappConstruct extends Construct {
     this._role = new iam.Role(this, "WebappRole", {
       assumedBy: new iam.ServicePrincipal("ecs-tasks.amazonaws.com"),
     });
-    const jongleurCluster = new ecs.Cluster(this, "AgoraCluster", {
+    const agoraCluster = new ecs.Cluster(this, "AgoraCluster", {
       clusterName: "AgoraCluster",
     });
     this._fargateService = new ecs_patterns.ApplicationLoadBalancedFargateService(this, "AgoraWebappFargateService", {
-      cluster: jongleurCluster,
+      cluster: agoraCluster,
       cpu: 256,
       memoryLimitMiB: 512,
       desiredCount: 1,
