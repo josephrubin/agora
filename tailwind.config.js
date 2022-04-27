@@ -8,6 +8,14 @@ module.exports = {
       fontFamily: {
         sans: ["Proxima Nova", ...defaultTheme.fontFamily.sans],
       },
+      gridTemplateColumns: ({ theme }) => ({
+        ...Object.fromEntries(
+          Object.entries(theme("width")).map(([k, v]) => [
+            `fill-${k}`,
+            `repeat(auto-fill, minmax(${v}, 1fr))`,
+          ])
+        ),
+      }),
     },
   },
   plugins: [],

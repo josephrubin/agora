@@ -18,6 +18,9 @@
   input[type=submit] {
     @apply button;
   }
+  ol {
+    @apply list-decimal;
+  }
   .title {
     @apply text-8xl;
     @apply font-thin;
