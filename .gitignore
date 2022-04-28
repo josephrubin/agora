@@ -10,4 +10,4 @@ cdk.out/
 
 coverage/
 
-/app/tailwind.css
+app/tailwind.css

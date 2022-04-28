@@ -121,21 +121,25 @@ export class AgoraGraphqlConstruct extends Construct {
     // Query parent.
     apiLambdaDataSource.createResolver({
       typeName: QUERY_TYPE,
-      fieldName: "readCollections",
-    });
-    apiLambdaDataSource.createResolver({
-      typeName: QUERY_TYPE,
-      fieldName: "readCollection",
-    });
-    apiLambdaDataSource.createResolver({
-      typeName: QUERY_TYPE,
       fieldName: "readAuthenticate",
     });
 
     // Mutation parent.
     apiLambdaDataSource.createResolver({
       typeName: MUTATION_TYPE,
-      fieldName: "createCollection",
+      fieldName: "createCast",
+    });
+    apiLambdaDataSource.createResolver({
+      typeName: MUTATION_TYPE,
+      fieldName: "reorderCast",
+    });
+    apiLambdaDataSource.createResolver({
+      typeName: MUTATION_TYPE,
+      fieldName: "transferCast",
+    });
+    apiLambdaDataSource.createResolver({
+      typeName: MUTATION_TYPE,
+      fieldName: "exportCast",
     });
     apiLambdaDataSource.createResolver({
       typeName: MUTATION_TYPE,
@@ -150,16 +154,14 @@ export class AgoraGraphqlConstruct extends Construct {
       fieldName: "refreshSession",
     });
 
-    // Collection parent.
-    apiLambdaDataSource.createResolver({
-      typeName: "Collection",
-      fieldName: "casts",
-    });
-
     // AuthenticatedUser parent.
     apiLambdaDataSource.createResolver({
       typeName: "AuthenticatedUser",
-      fieldName: "collections",
+      fieldName: "casts",
+    });
+    apiLambdaDataSource.createResolver({
+      typeName: "AuthenticatedUser",
+      fieldName: "readCast",
     });
   }
 
