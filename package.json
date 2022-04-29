@@ -42,6 +42,7 @@
     "antd": "^4.20.1",
     "aws-cdk": "^2.2.0",
     "aws-jwt-verify": "^1.0.3",
+    "bn.js": "^5.2.0",
     "concurrently": "^6.4.0",
     "esbuild": "^0.14.5",
     "graphql": "^15.7.2",
