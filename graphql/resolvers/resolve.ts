@@ -3,7 +3,7 @@
  * all queries and mutations.
  */
 
-import { Cast, Mutation, MutationCreateSessionArgs, MutationCreateUserArgs, User, Session, MutationRefreshSessionArgs, QueryReadAuthenticateArgs, AuthenticatedUser, AuthenticatedUserReadCastArgs } from "~/generated/graphql-schema";
+import { Cast, Mutation, MutationCreateSessionArgs, MutationCreateUserArgs, MutationCreateCastArgs, User, Session, MutationRefreshSessionArgs, QueryReadAuthenticateArgs, AuthenticatedUser, AuthenticatedUserReadCastArgs, MutationTransferCastArgs } from "~/generated/graphql-schema";
 import { AsrLambdaHandler, DecodedAccessToken } from "./appsync-resolver-types";
 import { DynamoDB } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocument } from "@aws-sdk/lib-dynamodb";
@@ -124,7 +124,103 @@ const lambdaHandler: AsrLambdaHandler = async (event) => {
     }
   }
   else if (parentTypeName === "Mutation") {
-    if (fieldName === "createUser") {
+    if (fieldName === "createCast") {
+      const createCastArgs = args as MutationCreateCastArgs;
+
+      // Ensure that the caller is verified.
+      const accessToken = createCastArgs.accessToken;
+      try {
+        await accessTokenVerifier.verify(accessToken);
+      }
+      catch {
+        return null;
+      }
+
+      const decodedAccessToken = jwt_decode(accessToken) as DecodedAccessToken;
+
+      // TODO: deal with index later.
+      const cast: Cast = {
+        id: uuidv4(),
+        index: -1,
+        mimeType: createCastArgs.input.mimeType,
+        uri: createCastArgs.input.uri,
+        centralizedUri: createCastArgs.input.centralizedUri,
+        history: [],
+      };
+
+      // Store the cast.
+      try {
+        await dynamoDbDocumentClient.put({
+          TableName: agoraEnv.AGORA_CAST_TABLE,
+          Item: {
+            userId: decodedAccessToken.sub,
+            ...cast,
+          },
+        });
+      }
+      catch (err) {
+        throw `Error storing cast with id ${cast.id}.`;
+      }
+
+      return cast;
+    }
+    else if (fieldName === "reorderCast") {
+      throw "Not implemented";
+    }
+    else if (fieldName === "transferCast") {
+      const transferCastArgs = args as MutationTransferCastArgs;
+
+      // Ensure that the caller is verified.
+      const accessToken = transferCastArgs.accessToken;
+      try {
+        await accessTokenVerifier.verify(accessToken);
+      }
+      catch {
+        return null;
+      }
+
+      const decodedAccessToken = jwt_decode(accessToken) as DecodedAccessToken;
+
+      // The user input contains the destination username, we need to find the userId.
+      const user = await cognitoClient.adminGetUser({
+        UserPoolId: agoraEnv.AGORA_USER_POOL_ID,
+        Username: transferCastArgs.username,
+      });
+      if (!user.UserAttributes) {
+        throw `Couldn't find recipient ${transferCastArgs.username}`;
+      }
+      let sub;
+      for (let i = 0; i < user.UserAttributes.length; i++) {
+        if (user.UserAttributes[i].Name === "sub") {
+          sub = user.UserAttributes[i].Value;
+        }
+      }
+      if (!sub) {
+        throw `Couldn't find sub for recipient ${transferCastArgs.username}`;
+      }
+
+      // Transfer the cast.
+      try {
+        await dynamoDbDocumentClient.update({
+          TableName: agoraEnv.AGORA_CAST_TABLE,
+          Key: {
+            userId: decodedAccessToken.sub,
+            id: transferCastArgs.id,
+          },
+          UpdateExpression: "SET userId = :u",
+          ExpressionAttributeValues: {
+            ":c": sub,
+          },
+        });
+      }
+      catch {
+        throw `Could not transfer cast ${transferCastArgs.id}`;
+      }
+    }
+    else if (fieldName === "exportCast") {
+      throw "Not implemented";
+    }
+    else if (fieldName === "createUser") {
       const { username, password } = (args as MutationCreateUserArgs);
 
       try {
@@ -269,6 +365,16 @@ const lambdaHandler: AsrLambdaHandler = async (event) => {
   //  rather than wait for gql to filter it out using
   //  event.info.selectionSetList.
 };
+
+async function verifyAccessTokenOrThrow(accessToken: string): Promise<DecodedAccessToken> {
+  try {
+    await accessTokenVerifier.verify(accessToken);
+  }
+  catch {
+    throw "Invalid access token.";
+  }
+  return jwt_decode(accessToken) as DecodedAccessToken;
+}
 
 /**
  * API calls to our Cognito User Pool must be authenticated with the secret key that our client
