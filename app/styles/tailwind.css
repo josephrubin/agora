@@ -15,11 +15,17 @@
     @apply p-2;
     @apply rounded-md;
   }
+  input[type=text], input[type=password] {
+    @apply text-black;
+  }
   input[type=submit] {
     @apply button;
   }
   ol {
     @apply list-decimal;
+  }
+  button {
+    @apply button;
   }
   .title {
     @apply text-8xl;
