@@ -39,6 +39,7 @@
     "@solana/wallet-adapter-react-ui": "^0.9.6",
     "@solana/wallet-adapter-wallets": "^0.16.0",
     "@solana/web3.js": "^1.41.3",
+    "antd": "^4.20.1",
     "aws-cdk": "^2.2.0",
     "aws-jwt-verify": "^1.0.3",
     "concurrently": "^6.4.0",
