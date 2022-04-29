@@ -34,7 +34,19 @@ export default function Mint() {
     // ------ TODO: Right now, we mint the same NFT of a cat every time this function is called -------------
 
     try {
-      mintNFT();
+      const mintTxId = await mintNFT(
+        connection,
+        wallet,
+        data
+      );
+
+      if (mintTxId === "failed") {
+        alert(mintTxId);
+      } else {
+        const mintUrl = "https://explorer.solana.com/tx/" + mintTxId + "?cluster=devnet";
+        console.log("Success 😎! Check out your newly minted NFT at: " + mintUrl);
+      }
+
     } catch (e: any) {
       console.error(e.message);
     }
