@@ -11,11 +11,15 @@ import {
 } from "remix";
 
 import styles from "./tailwind.css";
+import walletContextStyles from "~/styles/wallet.css";
 
 import { getAccessToken } from "./modules/users.server";
 import { LinksFunction } from "@remix-run/react/routeModules";
 
-export const links: LinksFunction = () => [{ rel: "stylesheet", href: styles }];
+export const links: LinksFunction = () => [
+  { rel: "stylesheet", href: styles },
+  { rel: "stylesheet", href: walletContextStyles },
+];
 
 // https://remix.run/api/conventions#default-export
 // https://remix.run/api/conventions#route-filenames
@@ -132,6 +136,9 @@ function Layout({ children }: { children: React.ReactNode }) {
             <ul className="flex flex-row gap-8">
               <li>
                 <Link to="/home">Home</Link>
+              </li>
+              <li>
+                <Link to="/mint">Mint</Link>
               </li>
               {accessKey ? (
                 <li>
