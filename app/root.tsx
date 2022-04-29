@@ -122,37 +122,36 @@ function Layout({ children }: { children: React.ReactNode }) {
   console.log("accessKey", accessKey);
 
   return (
-    <div className="bg-zinc-900 text-white min-h-screen justify-between flex flex-col px-32">
+    <div className="flex flex-col justify-between min-h-screen px-32 text-white bg-zinc-900">
       <div>
-        <header className="flex flex-row justify-between py-4 border-b">
+        <header className="flex flex-row items-center justify-between py-4 border-b">
           <Link to="/" title="Remix">
             <AgoraLogo />
           </Link>
           <nav aria-label="Main navigation">
-            <ul className="flex flex-row gap-8">
+            <ul className="flex flex-row items-center gap-8">
               <li>
                 <Link to="/home">Home</Link>
               </li>
               {accessKey ? (
                 <li>
-                  <Link to="collections/new">+ New Collection</Link>
+                  <Link to="collections/new">New Collection</Link>
                 </li>
               ) : null}
               {!accessKey ? (
                 <>
                   <li>
-                    <Link to="login">Log In</Link>
+                    <Link to="log-in">Log In</Link>
                   </li>
                   <li>
-                    <Link to="register">Sign Up</Link>
+                    <Link to="sign-up">Sign Up</Link>
                   </li>
                 </>
               ) : null}
               {accessKey ? (
                 <li>
-                  You are signed in.
                   <form method="post" action="logout">
-                    <input type="submit" value="logout" />
+                    <input type="submit" value="Log Out" />
                   </form>
                 </li>
               ) : null}

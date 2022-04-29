@@ -24,10 +24,10 @@ export const action: ActionFunction = async ({ request }) => {
   }
 };
 
-export default function Login() {
+export default function LogIn() {
   const actionData = useActionData();
 
-  if (actionData && actionData.error) {
+  if (actionData?.error) {
     return <p>{actionData.error}</p>;
   }
 
@@ -35,7 +35,7 @@ export default function Login() {
     <div className="flex flex-col items-center gap-8 my-16">
       <h1 className="title">Agora</h1>
       <h2>Your Community NFT Hub!</h2>
-      <Form method="post" className="flex flex-col gap-y-4 items-center">
+      <Form method="post" className="flex flex-col items-center gap-y-4">
         <div>
           <input className="w-80" name="username" type="text" placeholder="Email Address" />
         </div>
