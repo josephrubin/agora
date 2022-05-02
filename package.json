@@ -23,6 +23,7 @@
     "generate:css": "tailwindcss -m -i ./app/styles/tailwind.css -o app/tailwind.css"
   },
   "dependencies": {
+    "@ant-design/icons": "^4.7.0",
     "@aws-cdk/aws-appsync-alpha": "^2.3.0-alpha.0",
     "@aws-cdk/aws-lambda-python-alpha": "^2.3.0-alpha.0",
     "@aws-sdk/client-cognito-identity-provider": "^3.43.0",
@@ -40,7 +41,7 @@
     "@solana/wallet-adapter-react-ui": "^0.9.6",
     "@solana/wallet-adapter-wallets": "^0.16.0",
     "@solana/web3.js": "^1.41.3",
-    "antd": "^4.20.1",
+    "antd": "^4.20.2",
     "aws-cdk": "^2.2.0",
     "aws-jwt-verify": "^1.0.3",
     "bn.js": "^5.2.0",
@@ -51,6 +52,7 @@
     "graphql": "^15.7.2",
     "graphql-config": "^4.1.0",
     "graphql-request": "^3.6.1",
+    "ipfs-http-client": "^56.0.3",
     "jwt-decode": "^3.1.2",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",

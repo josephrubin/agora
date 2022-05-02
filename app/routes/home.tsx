@@ -24,7 +24,7 @@ export default function CollectionsLayout() {
   const sortedCasts = data.casts.sort(
     (a, b) => a.index - b.index
   ); */
-  const [modalOpen, setModalOpen] = useState(true);
+  const [modalOpen, setModalOpen] = useState(false);
 
   const test = <div className="w-full h-40 border-2 min-w-56 rounded-2xl hover:bg-zinc-700"
     onClick={() => setModalOpen(true)}
