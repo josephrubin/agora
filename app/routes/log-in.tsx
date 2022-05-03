@@ -46,10 +46,10 @@ export default function LogIn() {
       <h2>Your Community NFT Hub!</h2>
       <Form method="post" className="flex flex-col items-center gap-y-4">
         <div>
-          <input className="w-80" name="username" type="text" placeholder="Email Address" />
+          <input className="w-80" name="username" type="text" placeholder="username" />
         </div>
         <div>
-          <input className="w-80" name="password" type="password" placeholder="Password" />
+          <input className="w-80" name="password" type="password" placeholder="password" />
         </div>
         { actionData?.error && <p className="error">{actionData.error}</p> }
         <div className="flex items-center gap-4">

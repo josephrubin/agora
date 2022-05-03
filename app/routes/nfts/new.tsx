@@ -1,5 +1,5 @@
-import React, { createRef, useState } from "react";
-import { Form, ActionFunction, redirect, useMatches, LoaderFunction } from "remix";
+import React, { createRef, RefObject, useState } from "react";
+import { Form, ActionFunction, redirect, useMatches, LoaderFunction, useLoaderData } from "remix";
 import { Spinner } from "~/components/spinner";
 import { CastInput } from "~/generated/graphql-schema";
 import { createCast, exportCast, reorderCast, transferCast, readCast, readCasts } from "~/modules/casts.server";
@@ -38,6 +38,8 @@ export const action: ActionFunction = async ({ request }) => {
 type UploadState = "Ready" | "Uploading" | "Done" | "Error";
 
 export default function NewCast() {
+  const { makePresignedUploadUrlEndpoint } = useLoaderData<LoaderData>();
+
   const uploadFormRef = createRef<HTMLFormElement>();
   const fileInputRef = createRef<HTMLInputElement>();
   const imgRef = createRef<HTMLImageElement>();
@@ -49,8 +51,11 @@ export default function NewCast() {
       <h1>Create an NFT</h1>
 
       { /* Upload recording button and hidden form. */ }
-      <form method="POST" encType="multipart/form-data" ref={uploadFormRef}>
+      <form encType="multipart/form-data" ref={uploadFormRef} onSubmit={(event) => clientCreateCast(event, fileInputRef, makePresignedUploadUrlEndpoint)}>
         <label className="flex flex-col gap-4">
+          { /* The input box for the NFT title. The title is used later when exporting to the chain. */ }
+          <input type="text" name="title" />
+
           { /* This is a custom button which delegates clicks to the hidden file input field. We can style it however we want. */ }
           <button type="button" disabled={uploadState !== "Ready"} onClick={() => fileInputRef.current?.click()}>Upload Image</button>
 
@@ -69,7 +74,7 @@ export default function NewCast() {
           { /* The actual image upload input field. We make it hidden for prettiness. */}
           <input
             type="file"
-            name="recordingFile"
+            name="imageFile"
             accept="image/*"
             ref={fileInputRef}
             style={{display: "none"}}
@@ -77,6 +82,9 @@ export default function NewCast() {
               (e) => showImagePreview(e, imgRef)
             }
           />
+
+          { /* Submit the form, doing most of the upload client-side. */ }
+          <button type="submit">Create NFT!</button>
         </label>
       </form>
     </section>
@@ -105,10 +113,22 @@ function showImagePreview(
  * Handle the submission of the form to create a Cast.
  * We don't just use traditional form submission (Remix style) because the process is a bit more involved.
  */
-async function clientCreateCast() {
+async function clientCreateCast(event: React.FormEvent, fileInput: RefObject<HTMLInputElement>, makePresignedUploadUrlEndpoint: string) {
+  event.preventDefault();
+
+  if (!fileInput.current?.files?.item(0)) {
+    return {
+      error: "No file uploaded",
+    };
+  }
+
+  const image = fileInput.current.files[0];
+
   try {
     // First: get an authenticated (presigned) URL to the S3 bucket where we can directly upload our image.
-    const presignedUrl = await getPresignedUrlForImageUpload();
+    const presignedUrl = await getPresignedUrlForImageUpload(makePresignedUploadUrlEndpoint, {
+      accessToken: accessToken, pieceId: piece.id,
+    });
 
     // Second: upload the image to the bucket.
     const centralizedImageUri = await userPresignedUrlToUploadImage(presignedUrl);

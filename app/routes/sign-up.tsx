@@ -49,16 +49,17 @@ export default function SignUp() {
     return (
       <Form method="post" className="flex flex-col gap-4 my-8">
         <h1>Sign Up</h1>
+        <p>
+          Join to start creating and trading NFTs.
+        </p>
         <div>
-          <label className="mr-4 font-bold">Username</label>
-          <input name="username" type="text" />
+          <input name="username" placeholder="username" type="text" />
         </div>
         <div>
-          <label className="mr-4 font-bold">Password</label>
-          <input name="password" type="password" />
+          <input name="password" placeholder="password" type="password" />
         </div>
         { actionData?.error && <p className="error">{actionData.error}</p> }
-        <input type="submit" />
+        <input type="submit" value="Sign Up" />
       </Form>
     );
   }
