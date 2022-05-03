@@ -1,7 +1,7 @@
-import { useLoaderData, Outlet, Link } from "remix";
+import { useLoaderData, Outlet, Link, LoaderFunction } from "remix";
 import { readCasts } from "~/modules/casts.server";
 import { Cast } from "~/generated/graphql-schema";
-import { getAccessToken } from "~/modules/users.server";
+import { getAccessToken, redirectToLoginIfNull } from "~/modules/session.server";
 
 import Modal from "react-modal";
 import { useState } from "react";
@@ -10,25 +10,26 @@ interface LoaderData {
   readonly casts: Cast[];
 }
 
-// TODO: Uncomment
-/* export async function loader({request}) {
-  const accessToken = await getAccessToken(request);
+export const loader: LoaderFunction = async ({request}) => {
+  const accessToken = redirectToLoginIfNull(await getAccessToken(request));
 
-  return {casts: await readCasts(accessToken!)};
-} */
+  return { casts: await readCasts(accessToken) };
+};
 
 export default function CollectionsLayout() {
-  // TODO: Uncomment
-  /* const data: LoaderData = useLoaderData();
+  const { casts }: LoaderData = useLoaderData<LoaderData>();
 
-  const sortedCasts = data.casts.sort(
+  const sortedCasts = casts.sort(
     (a, b) => a.index - b.index
-  ); */
+  );
+
   const [modalOpen, setModalOpen] = useState(true);
 
-  const test = <div className="w-full h-40 border-2 min-w-56 rounded-2xl hover:bg-zinc-700"
-    onClick={() => setModalOpen(true)}
-               ></div>;
+  const test = (
+    <div className="w-full h-40 border-2 min-w-56 rounded-2xl hover:bg-zinc-700"
+      onClick={() => setModalOpen(true)}
+    ></div>
+  );
 
   return (
     <div className="flex flex-col gap-4 my-8">

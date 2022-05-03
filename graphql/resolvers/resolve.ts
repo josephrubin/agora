@@ -165,6 +165,7 @@ const lambdaHandler: AsrLambdaHandler = async (event) => {
       return cast;
     }
     else if (fieldName === "reorderCast") {
+      /* Change the order of the cast's on a user's page. Low priority. */
       throw "Not implemented";
     }
     else if (fieldName === "transferCast") {
@@ -218,6 +219,7 @@ const lambdaHandler: AsrLambdaHandler = async (event) => {
       }
     }
     else if (fieldName === "exportCast") {
+      /* This may end up being implemented client-side. */
       throw "Not implemented";
     }
     else if (fieldName === "createUser") {

@@ -1,22 +1,30 @@
-import { ActionFunction, Form, useActionData } from "remix";
-import { createSession, createSessionRedirect } from "~/modules/users.server";
+import { ActionFunction, Form, useActionData, useTransition } from "remix";
+import { Spinner } from "~/components/spinner";
+import { createAgoraSession, createSessionRedirectResponse } from "~/modules/session.server";
+
+interface ActionData {
+  readonly error?: string;
+}
 
 export const action: ActionFunction = async ({ request }) => {
   const formData = await request.formData();
 
-  // TODO: form validation
   const username = String(formData.get("username"));
   const password = String(formData.get("password"));
 
-  // For now we assume no errors. TODO - fix this.
+  if (!username || !password) {
+    return {
+      error: "Missing username or password.",
+    };
+  }
 
-  const session = await createSession({
+  const session = await createAgoraSession({
     username: username,
     password: password,
   });
 
   if (session && session.accessToken) {
-    return createSessionRedirect(session, "/");
+    return createSessionRedirectResponse(session, "/");
   } else {
     return {
       error: "Could not make session",
@@ -25,11 +33,8 @@ export const action: ActionFunction = async ({ request }) => {
 };
 
 export default function LogIn() {
-  const actionData = useActionData();
-
-  if (actionData?.error) {
-    return <p>{actionData.error}</p>;
-  }
+  const actionData = useActionData<ActionData | null>();
+  const transition = useTransition();
 
   return (
     <div className="flex flex-col items-center gap-8 my-16">
@@ -42,7 +47,10 @@ export default function LogIn() {
         <div>
           <input className="w-80" name="password" type="password" placeholder="Password" />
         </div>
-        <input type="submit" value="Log In" />
+        { actionData?.error && <p className="error">{actionData.error}</p> }
+        <div className="flex items-center gap-4">
+          <input type="submit" value="Log In" disabled={transition.state !== "idle"} /> { transition.state !== "idle" && <Spinner /> }
+        </div>
       </Form>
     </div>
   );

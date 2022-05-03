@@ -1,30 +1,46 @@
+import { Link } from "@remix-run/react";
 import { ActionFunction, Form, useActionData } from "remix";
 import { createUser } from "~/modules/users.server";
+
+interface ActionData {
+  readonly error?: string;
+}
 
 export const action: ActionFunction = async ({ request }) => {
   const formData = await request.formData();
 
-  // TODO: form validation
   const username = String(formData.get("username"));
   const password = String(formData.get("password"));
 
-  // For now we assume no errors. TODO - fix this.
+  if (!username || !password) {
+    return {
+      error: "Missing username or password.",
+    };
+  }
 
-  const user = await createUser({username: username, password: password});
+  try {
+    await createUser({username: username, password: password});
+  }
+  catch {
+    return {
+      error: "Invalid username or password. Maybe your password was too short?",
+    };
+  }
 
-  return user;
+  return {};
 };
 
 export default function SignUp() {
-  const user = useActionData();
-  if (user) {
+  const actionData = useActionData<ActionData | null>();
+
+  if (actionData && !actionData.error) {
     return (
       <>
+        <h1>
+          {"You've signed up! Go ahead and log right in!"}
+        </h1>
         <p>
-          You&apos;ve signed up! Here are the details:
-        </p>
-        <p>
-          {JSON.stringify(user)}
+          <Link to="/log-in">Continue to log in</Link>
         </p>
       </>
     );
@@ -41,6 +57,7 @@ export default function SignUp() {
           <label className="mr-4 font-bold">Password</label>
           <input name="password" type="password" />
         </div>
+        { actionData?.error && <p className="error">{actionData.error}</p> }
         <input type="submit" />
       </Form>
     );

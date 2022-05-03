@@ -1,5 +1,5 @@
 import { LoaderFunction, redirect } from "remix";
-import { getAccessToken } from "~/modules/users.server";
+import { getAccessToken } from "~/modules/session.server";
 
 // https://remix.run/docs/en/v1/api/conventions#loader
 export const loader: LoaderFunction = async ({request}) => {
