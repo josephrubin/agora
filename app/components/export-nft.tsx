@@ -6,6 +6,7 @@ import { WalletNotConnectedError } from "@solana/wallet-adapter-base";
 import { mintNFT } from "../actions/mintNFT";
 import { uploadMetadataToIpfs } from "../utils/ipfs";
 import { Data, CreatorClass } from "~/types";
+import { exportCast } from "~/modules/casts.server";
 
 
 const ExportNFT = (props: {
@@ -55,6 +56,12 @@ const ExportNFT = (props: {
       } else {
         const mintUrl = "https://explorer.solana.com/tx/" + mintTxId + "?cluster=devnet";
         console.log("Success 😎! Check out your newly minted NFT at: " + mintUrl);
+
+        // TODO: Now let the backend know we've exported.
+        /*await exportCast({
+
+        });*/
+
         setFinishedMinting(true);
         setMintUrl(mintUrl);
       }

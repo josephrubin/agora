@@ -154,47 +154,49 @@ function Layout({ children }: { children: React.ReactNode }) {
   const accessToken = useAccessToken();
 
   return (
-    <div className="flex flex-col justify-between min-h-screen px-32 text-white topography">
-      <div>
-        <header className="flex flex-row items-center justify-between py-4 border-b">
-          <Link to="/" title="Remix">
-            <AgoraLogo />
-          </Link>
-          <nav aria-label="Main navigation">
-            <ul className="flex flex-row items-center gap-8">
-              <li>
-                <NavLink to="/">Home</NavLink>
-              </li>
-              {accessToken ? (
+    <div className="topography">
+      <div className="gradient flex flex-col justify-between min-h-screen px-32 text-white">
+        <div>
+          <header className="flex flex-row items-center justify-between py-4 border-b">
+            <Link to="/" title="Remix">
+              <AgoraLogo />
+            </Link>
+            <nav aria-label="Main navigation">
+              <ul className="flex flex-row items-center gap-8">
                 <li>
-                  <NavLink to="nfts/new">Create NFT</NavLink>
+                  <NavLink to="/">Home</NavLink>
                 </li>
-              ) : null}
-              {!accessToken ? (
-                <>
+                {accessToken ? (
                   <li>
-                    <NavLink to="log-in">Log In</NavLink>
+                    <NavLink to="nfts/new">Create NFT</NavLink>
                   </li>
+                ) : null}
+                {!accessToken ? (
+                  <>
+                    <li>
+                      <NavLink to="log-in">Log In</NavLink>
+                    </li>
+                    <li>
+                      <NavLink to="sign-up">Sign Up</NavLink>
+                    </li>
+                  </>
+                ) : null}
+                {accessToken ? (
                   <li>
-                    <NavLink to="sign-up">Sign Up</NavLink>
+                    <form method="post" action="/logout">
+                      <input type="submit" value="Log Out" />
+                    </form>
                   </li>
-                </>
-              ) : null}
-              {accessToken ? (
-                <li>
-                  <form method="post" action="/logout">
-                    <input type="submit" value="Log Out" />
-                  </form>
-                </li>
-              ) : null}
-            </ul>
-          </nav>
-        </header>
-        <main>{children}</main>
+                ) : null}
+              </ul>
+            </nav>
+          </header>
+          <main>{children}</main>
+        </div>
+        <footer className="flex flex-row justify-center py-4 border-t">
+          <p>&copy; Agora 2022</p>
+        </footer>
       </div>
-      <footer className="flex flex-row justify-center py-4 border-t">
-        <p>&copy; Agora 2022</p>
-      </footer>
     </div>
   );
 }
