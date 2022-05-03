@@ -46,7 +46,7 @@ export default function NewCast() {
 
   return (
     <section className="flex flex-col gap-4 py-8">
-      <h1>Create NFT</h1>
+      <h1>Create an NFT</h1>
 
       { /* Upload recording button and hidden form. */ }
       <form method="POST" encType="multipart/form-data" ref={uploadFormRef}>

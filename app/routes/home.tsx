@@ -7,6 +7,7 @@ import Modal from "react-modal";
 import { useState } from "react";
 
 import NftDetails from "~/components/nft-details";
+import AddNFTModal from "~/components/add-nft-modal";
 
 interface LoaderData {
   readonly casts: Cast[];
@@ -37,6 +38,7 @@ export default function CollectionsLayout() {
     <div className="flex flex-col gap-4 my-8">
       <h1>My NFTs</h1>
       <div className="grid gap-4 grid-cols-fill-52">
+        <AddNFTModal />
         {test}
         {test}
         {test}

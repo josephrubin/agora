@@ -158,9 +158,6 @@ function Layout({ children }: { children: React.ReactNode }) {
               <li>
                 <NavLink to="/home">Home</NavLink>
               </li>
-              <li>
-                <Link to="/mint">Mint</Link>
-              </li>
               {accessToken ? (
                 <li>
                   <NavLink to="nfts/new">Create NFT</NavLink>
