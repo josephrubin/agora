@@ -50,9 +50,9 @@ const ExportNFT = (props: {
       );
 
       if (mintTxId === "failed") {
-        alert(mintTxId);
+        alert("Failed to export NFT! Check if you have sufficient SOL balance in your wallet to approve the transaction");
       } else {
-        const mintUrl = "https://solscan.io/token/" + mintTxId + "?cluster=devnet";
+        const mintUrl = "https://explorer.solana.com/tx/" + mintTxId + "?cluster=devnet";
         console.log("Success 😎! Check out your newly minted NFT at: " + mintUrl);
         setFinishedMinting(true);
         setMintUrl(mintUrl);
@@ -68,6 +68,7 @@ const ExportNFT = (props: {
     <Button
       type="primary"
       name="mint"
+      disabled={!wallet.publicKey}
       htmlType="submit"
       size="large"
       style={{ padding: 10 }}
@@ -75,10 +76,13 @@ const ExportNFT = (props: {
         finishedMinting ? window.open(mintUrl) : mint();
       }}
     >
-      {finishedMinting ? "View on Solscan" : "Export"}
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-      </svg>
+      <div className="flex flex-row justify-center items-center">
+        {finishedMinting ? "View on Solana " : "Export "}
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <path fillRule="evenodd" d="M10.293 15.707a1 1 0 010-1.414L14.586 10l-4.293-4.293a1 1 0 111.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z" clipRule="evenodd" />
+          <path fillRule="evenodd" d="M4.293 15.707a1 1 0 010-1.414L8.586 10 4.293 5.707a1 1 0 011.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z" clipRule="evenodd" />
+        </svg>
+      </div>
     </Button>
   );
 };

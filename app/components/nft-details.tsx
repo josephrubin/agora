@@ -52,16 +52,18 @@ function NFTDetails(props: {
         <WalletModalProvider>
           <div>
             <div style={{ display: "flex", justifyContent: "flex-end"}}>
-              <div style={{ margin: "10px" }}>
+              <div className="m-2">
                 <WalletMultiButton />
               </div>
-              <div style={{ margin: "10px" }}>
+              <div className="m-2">
                 <WalletDisconnectButton />
               </div>
-
+              <div className="m-2">
+                <ExportNFT title={props.title} imageUri={props.imageUri} imageType="image/png" />
+              </div>
             </div>
+
             <NftDetailsView title={props.title} imageUri={props.imageUri} />
-            <ExportNFT title={props.title} imageUri={props.imageUri} imageType="image/png" />
           </div>
         </WalletModalProvider>
       </WalletProvider>
