@@ -12,6 +12,7 @@ import {
 } from "remix";
 
 import styles from "./tailwind.css";
+import walletContextStyles from "~/styles/wallet.css";
 
 import { LinksFunction } from "@remix-run/react/routeModules";
 import { getAccessToken, refreshAccessTokenIfNeeded } from "./modules/session.server";
@@ -44,7 +45,10 @@ export const loader: LoaderFunction = async ({request}) => {
   return { accessToken };
 };
 
-export const links: LinksFunction = () => [{ rel: "stylesheet", href: styles }];
+export const links: LinksFunction = () => [
+  { rel: "stylesheet", href: styles },
+  { rel: "stylesheet", href: walletContextStyles },
+];
 
 // https://remix.run/api/conventions#default-export
 // https://remix.run/api/conventions#route-filenames
