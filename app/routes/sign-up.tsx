@@ -35,14 +35,15 @@ export default function SignUp() {
 
   if (actionData && !actionData.error) {
     return (
-      <>
-        <h1>
-          {"You've signed up! Go ahead and log right in!"}
+      <div className="flex flex-col items-center gap-8 mx-auto mt-32 w-80">
+        <h1 className="text-center">
+          You&apos;ve signed up! <br />
+          Go ahead and log right in!
         </h1>
         <p>
-          <Link to="/log-in">Continue to log in</Link>
+          <Link to="/log-in" className="underline">Continue to log in</Link>
         </p>
-      </>
+      </div>
     );
   }
   else {
