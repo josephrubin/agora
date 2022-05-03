@@ -42,6 +42,9 @@ A representation of an NFT that could be exported.
 type Cast {
   id: ID!
 
+  # A short name for the NFT that will be created from this Cast, as per the Solana NFT standard.
+  title: String!
+
   # A unique integer representing this Cast's order on a user's page.
   index: Int!
 
