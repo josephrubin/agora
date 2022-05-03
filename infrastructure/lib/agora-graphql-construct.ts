@@ -57,7 +57,11 @@ export class AgoraGraphqlConstruct extends Construct {
       schema: appsync.Schema.fromAsset(props.graphqlSchemaFile),
       authorizationConfig: {
         defaultAuthorization: {
-          authorizationType: appsync.AuthorizationType.API_KEY,
+          authorizationType: appsync.AuthorizationType.LAMBDA,
+          lambdaAuthorizerConfig: {
+            handler: graphqlApiAuthorizer,
+            resultsCacheTtl: Duration.minutes(10),
+          },
         },
       },
       xrayEnabled: true,
@@ -107,7 +111,8 @@ export class AgoraGraphqlConstruct extends Construct {
     resolverCognitoPolicy.addActions(
       "cognito-idp:DescribeUserPoolClient",
       "cognito-idp:AdminConfirmSignUp",
-      "cognito-idp:AdminInitiateAuth"
+      "cognito-idp:AdminInitiateAuth",
+      "cognito-idp:AdminGetUser"
     );
     apiResolverLambda.addToRolePolicy(resolverCognitoPolicy);
 

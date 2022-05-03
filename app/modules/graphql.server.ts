@@ -1,20 +1,19 @@
-/** Client module for interacting with our graphql backend.
+/**
+ * Client module for interacting with our graphql backend.
  * We use graphql-request https://github.com/prisma-labs/graphql-request
  * at the moment. It is a fairly light library that is React-unaware
- * and our module provides a wrapper aroung it.
+ * and our module provides a wrapper around it.
 */
 
 import { GraphQLClient } from "graphql-request";
 
 /* The location of our GraphQL server. TODO: This should come in as an environment
  * variable which depends on our target environment. */
-const GRAPHQL_ENDPOINT = "https://m7khcdffczew5bxsxtgewcjjxy.appsync-api.us-east-1.amazonaws.com/graphql";
+const GRAPHQL_ENDPOINT = "https://jjzwthutuvavfnkeuqbbyqwim4.appsync-api.us-east-1.amazonaws.com/graphql";
 
 const graphQlClient = new GraphQLClient(GRAPHQL_ENDPOINT, {
   headers: {
-    // Right now we use API key auth with a single known key but
-    // TODO this will probably end up changing.
-    "x-api-key": "da2-x5cvjq6jpzglzljdqdbcjynhi4",
+    Authorization: "nothing",
   },
 });
 

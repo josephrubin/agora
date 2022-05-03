@@ -1,7 +1,8 @@
 import { LoaderFunction, redirect } from "remix";
+import { getAccessToken } from "~/modules/session.server";
 
 // https://remix.run/docs/en/v1/api/conventions#loader
-export const loader: LoaderFunction = async () => {
-  const isLoggedIn = true;
-  return isLoggedIn ? redirect("/login") : redirect("home");
+export const loader: LoaderFunction = async ({request}) => {
+  const isLoggedIn = await getAccessToken(request);
+  return (isLoggedIn === null) ? redirect("/log-in") : redirect("home");
 };

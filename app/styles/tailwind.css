@@ -39,3 +39,8 @@
     @apply hover:bg-zinc-800
   }
 }
+
+/* NavLink tags get the active class if we are on their page. */
+a.active {
+  text-decoration: underline;
+}

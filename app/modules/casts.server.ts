@@ -19,7 +19,7 @@ export async function readCasts(accessToken: string) {
   const data = await graphql.request(query, {
     accessToken: accessToken,
   });
-  return data.readAuthenticate.collections;
+  return data.readAuthenticate.casts;
 }
 
 export async function readCast(accessToken: string, id: string) : Promise<Cast> {

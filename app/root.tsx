@@ -1,5 +1,6 @@
 import {
   Link,
+  NavLink,
   Links,
   LiveReload,
   Meta,
@@ -7,14 +8,41 @@ import {
   Scripts,
   ScrollRestoration,
   useCatch,
-  useLoaderData
+  useLoaderData,
+  LoaderFunction
 } from "remix";
 
 import styles from "./tailwind.css";
 import walletContextStyles from "~/styles/wallet.css";
 
-import { getAccessToken } from "./modules/users.server";
 import { LinksFunction } from "@remix-run/react/routeModules";
+import { getAccessToken, refreshAccessTokenIfNeeded } from "./modules/session.server";
+import { useAccessToken } from "./modules/session";
+
+/**
+ * This loader will run on every GET page request because it is at the root.
+ * The main task is to see if the user is logged in. If they are, make sure
+ * that they don't have an obviously expired accessToken. If they do, refresh
+ * it.
+ *
+ * If they are not logged in, that's okay too. All child routes will be able
+ * to use the useAccessToken hook to get the acceessTokenn (or null if the
+ * user is not logged in).
+ */
+export const loader: LoaderFunction = async ({request}) => {
+  // The root loader gets the user's accessToken so all child
+  // routes can access it through useAccessToken!
+  const accessToken = await getAccessToken(request);
+
+  // If we actually got an access token (the user is logged in),
+  // ensure that it's a valid access token, and refresh it if
+  // needed.
+  if (accessToken !== null) {
+    await refreshAccessTokenIfNeeded(request);
+  }
+
+  return { accessToken };
+};
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: styles },
@@ -89,12 +117,6 @@ export function CatchBoundary() {
   );
 }
 
-export const loader = async ({ request }: { request: Request }) => {
-  const accessKey = await getAccessToken(request);
-
-  return accessKey;
-};
-
 function Document({
   children,
   title,
@@ -122,44 +144,42 @@ function Document({
 }
 
 function Layout({ children }: { children: React.ReactNode }) {
-  const accessKey = useLoaderData();
-  console.log("accessKey", accessKey);
+  const accessToken = useAccessToken();
 
   return (
-    <div className="bg-zinc-900 text-white min-h-screen justify-between flex flex-col px-32">
+    <div className="flex flex-col justify-between min-h-screen px-32 text-white bg-zinc-900">
       <div>
-        <header className="flex flex-row justify-between py-4 border-b">
+        <header className="flex flex-row items-center justify-between py-4 border-b">
           <Link to="/" title="Remix">
             <AgoraLogo />
           </Link>
           <nav aria-label="Main navigation">
-            <ul className="flex flex-row gap-8">
+            <ul className="flex flex-row items-center gap-8">
               <li>
-                <Link to="/home">Home</Link>
+                <NavLink to="/home">Home</NavLink>
               </li>
               <li>
                 <Link to="/mint">Mint</Link>
               </li>
-              {accessKey ? (
+              {accessToken ? (
                 <li>
-                  <Link to="collections/new">+ New Collection</Link>
+                  <NavLink to="nfts/new">Create NFT</NavLink>
                 </li>
               ) : null}
-              {!accessKey ? (
+              {!accessToken ? (
                 <>
                   <li>
-                    <Link to="login">Log In</Link>
+                    <NavLink to="log-in">Log In</NavLink>
                   </li>
                   <li>
-                    <Link to="register">Sign Up</Link>
+                    <NavLink to="sign-up">Sign Up</NavLink>
                   </li>
                 </>
               ) : null}
-              {accessKey ? (
+              {accessToken ? (
                 <li>
-                  You are signed in.
                   <form method="post" action="logout">
-                    <input type="submit" value="logout" />
+                    <input type="submit" value="Log Out" />
                   </form>
                 </li>
               ) : null}

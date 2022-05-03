@@ -12,7 +12,7 @@ export function makeNodejsLambda(scope: Construct, id: string, props: Partial<no
     tracing: lambda.Tracing.ACTIVE,
 
     bundling: {
-      minify: true,
+      minify: false, /* TODO: true. */
       banner: "/* (c) Agora; minified and bundled. */",
     },
 

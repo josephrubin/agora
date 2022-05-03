@@ -61,6 +61,7 @@ type Cast {
 input CastInput {
   mimeType: String!
   uri: String!
+  centralizedUri: String!
 }
 
 type HistoryItem {
