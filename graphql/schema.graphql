@@ -21,8 +21,8 @@ type Mutation {
   reorderCast(accessToken: String!, id: ID!, index: Int!): Cast
   """Transfer a cast to the given username. Returns the cast if successful, else null."""
   transferCast(accessToken: String!, id: ID!, username: String!): Cast
-  """Export a Cast to an NFT on the blockchain for the given address. This cast will be deleted. Returns the resultant NFT or null."""
-  exportCast(accessToken: String!, id: ID!, address: String!): Nft
+  """Mark a Cast as exported to Solana. Returns the resultant Cast or null."""
+  exportCast(accessToken: String!, id: ID!, txId: String!): Cast
 
   """
   Create a new user (sign up). As is standard, user/pass are passed over
@@ -42,6 +42,9 @@ A representation of an NFT that could be exported.
 type Cast {
   id: ID!
 
+  # A short name for the NFT that will be created from this Cast, as per the Solana NFT standard.
+  title: String!
+
   # A unique integer representing this Cast's order on a user's page.
   index: Int!
 
@@ -53,6 +56,9 @@ type Cast {
 
   # The centralized location of the Cast's data. This may be a URL into our storage.
   centralizedUri: String!
+
+  # The Solana transaction id for the NFT, if this cast has actually been exported.
+  txId: String
 
   # The transaction history of this NFT.
   history: [HistoryItem!]!
@@ -112,11 +118,4 @@ type Session {
   a relatively low TTL while the refreshToken lasts much longer.
   """
   refreshToken: String!
-}
-
-"""Representation of an actual NFT that's on the blockchain."""
-type Nft {
-  """These properties subject to change. TODO: Should add contract address."""
-  mimeType: String!
-  uri: String!
 }

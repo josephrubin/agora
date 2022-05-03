@@ -3,7 +3,7 @@
  * all queries and mutations.
  */
 
-import { Cast, Mutation, MutationCreateSessionArgs, MutationCreateUserArgs, MutationCreateCastArgs, User, Session, MutationRefreshSessionArgs, QueryReadAuthenticateArgs, AuthenticatedUser, AuthenticatedUserReadCastArgs, MutationTransferCastArgs } from "~/generated/graphql-schema";
+import { Cast, Mutation, MutationCreateSessionArgs, MutationCreateUserArgs, MutationCreateCastArgs, User, Session, MutationRefreshSessionArgs, QueryReadAuthenticateArgs, AuthenticatedUser, AuthenticatedUserReadCastArgs, MutationTransferCastArgs, MutationExportCastArgs } from "~/generated/graphql-schema";
 import { AsrLambdaHandler, DecodedAccessToken } from "./appsync-resolver-types";
 import { DynamoDB } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocument } from "@aws-sdk/lib-dynamodb";
@@ -202,7 +202,7 @@ const lambdaHandler: AsrLambdaHandler = async (event) => {
 
       // Transfer the cast.
       try {
-        await dynamoDbDocumentClient.update({
+        const updatedCast = await dynamoDbDocumentClient.update({
           TableName: agoraEnv.AGORA_CAST_TABLE,
           Key: {
             userId: decodedAccessToken.sub,
@@ -212,15 +212,52 @@ const lambdaHandler: AsrLambdaHandler = async (event) => {
           ExpressionAttributeValues: {
             ":c": sub,
           },
+          ReturnValues: "ALL_NEW",
         });
+
+        // Now that we've transfered the Cast, return the new object.
+        return updatedCast.Attributes;
       }
       catch {
         throw `Could not transfer cast ${transferCastArgs.id}`;
       }
     }
     else if (fieldName === "exportCast") {
-      /* This may end up being implemented client-side. */
-      throw "Not implemented";
+      /* We export the NFT to Solana on the frontend, but we will also mark this as completed on the backend. */
+      const exportCastArgs = args as MutationExportCastArgs;
+
+      // Ensure that the caller is verified.
+      const accessToken = exportCastArgs.accessToken;
+      try {
+        await accessTokenVerifier.verify(accessToken);
+      }
+      catch {
+        return null;
+      }
+
+      const decodedAccessToken = jwt_decode(accessToken) as DecodedAccessToken;
+
+      // Transfer the cast.
+      try {
+        const updatedCast = await dynamoDbDocumentClient.update({
+          TableName: agoraEnv.AGORA_CAST_TABLE,
+          Key: {
+            userId: decodedAccessToken.sub,
+            id: exportCastArgs.id,
+          },
+          UpdateExpression: "SET txId = :s",
+          ExpressionAttributeValues: {
+            ":s": exportCastArgs.txId,
+          },
+          ReturnValues: "ALL_NEW",
+        });
+
+        // Now that we've transfered the Cast, return the new object.
+        return updatedCast.Attributes;
+      }
+      catch {
+        throw `Could not export cast ${exportCastArgs.id}`;
+      }
     }
     else if (fieldName === "createUser") {
       const { username, password } = (args as MutationCreateUserArgs);
