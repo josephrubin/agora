@@ -4,6 +4,7 @@ import { Spinner } from "~/components/spinner";
 import { CastInput } from "~/generated/graphql-schema";
 import { createCast, exportCast, reorderCast, transferCast, readCast, readCasts } from "~/modules/casts.server";
 import { MAKE_PRESIGNED_UPLOAD_URL_ENDPOINT } from "~/modules/media.server";
+import { useAccessToken } from "~/modules/session";
 import { getAccessToken, redirectToLoginIfNull } from "~/modules/session.server";
 import { uploadImageToIpfs } from "~/utils/ipfs";
 
@@ -40,9 +41,16 @@ type UploadState = "Ready" | "Uploading" | "Done" | "Error";
 
 export default function NewCast() {
   const { makePresignedUploadUrlEndpoint } = useLoaderData<LoaderData>();
+  const accessToken = useAccessToken();
+
+  if (!accessToken) {
+    throw "Impossible; no access token on this page.";
+  }
 
   const uploadFormRef = createRef<HTMLFormElement>();
   const fileInputRef = createRef<HTMLInputElement>();
+  const titleInputRef = createRef<HTMLInputElement>();
+  const accessTokenInputRef = createRef<HTMLInputElement>();
   const imgRef = createRef<HTMLImageElement>();
 
   const [uploadState, setUploadState] = useState<UploadState>("Ready");
@@ -52,14 +60,16 @@ export default function NewCast() {
       <h1>Create an NFT</h1>
 
       { /* Upload recording button and hidden form. */ }
-      <form encType="multipart/form-data" ref={uploadFormRef} onSubmit={(event) => clientCreateCast(event, fileInputRef, makePresignedUploadUrlEndpoint)}>
+      <form encType="multipart/form-data" ref={uploadFormRef} onSubmit={(event) => clientCreateCast(event, fileInputRef, titleInputRef, accessTokenInputRef, makePresignedUploadUrlEndpoint, setUploadState)}>
         <label className="flex flex-col gap-4">
           { /* The input box for the NFT title. The title is used later when exporting to the chain. */ }
+
           <input
             type="text"
             name="title"
             maxLength={50}
             placeholder="Give a title"
+            ref={titleInputRef}
           />
 
           { /* This is a custom button which delegates clicks to the hidden file input field. We can style it however we want. */ }
@@ -88,6 +98,9 @@ export default function NewCast() {
               (e) => showImagePreview(e, imgRef)
             }
           />
+
+          { /* This hidden input element contains the user's accessToken since we need it on the client side. */ }
+          <input type="hidden" name="accessToken" value={accessToken} />
 
           { /* Submit the form, doing most of the upload client-side. */ }
           <button type="submit">Create NFT!</button>
@@ -119,16 +132,37 @@ function showImagePreview(
  * Handle the submission of the form to create a Cast.
  * We don't just use traditional form submission (Remix style) because the process is a bit more involved.
  */
-async function clientCreateCast(event: React.FormEvent, fileInput: RefObject<HTMLInputElement>, makePresignedUploadUrlEndpoint: string) {
+async function clientCreateCast(
+  event: React.FormEvent,
+  fileInput: RefObject<HTMLInputElement>,
+  titleInput: RefObject<HTMLInputElement>,
+  accessTokenInput: RefObject<HTMLInputElement>,
+  makePresignedUploadUrlEndpoint: string,
+  setUploadState: React.Dispatch<React.SetStateAction<UploadState>>
+) {
   event.preventDefault();
 
   if (!fileInput.current?.files?.item(0)) {
     return {
-      error: "No file uploaded",
+      error: "No file uploaded.",
+    };
+  }
+
+  if (!titleInput.current?.value) {
+    return {
+      error: "No title given.",
+    };
+  }
+
+  if (!accessTokenInput.current?.value) {
+    return {
+      error: "No access token given.",
     };
   }
 
   const image = fileInput.current.files[0];
+  const title = titleInput.current.value;
+  const accessToken = accessTokenInput.current.value;
 
   try {
     // First: get an authenticated (presigned) URL to the S3 bucket where we can directly upload our image.
@@ -144,6 +178,15 @@ async function clientCreateCast(event: React.FormEvent, fileInput: RefObject<HTM
     const imageIpfsUri = await uploadImageToIpfs(imageArrayBuffer);
 
     // Fourth: submit all this data to the server to create the cast.
+    await createCast({
+      accessToken: accessToken,
+      input: {
+        title: title,
+        mimeType: image.type, //todo
+        centralizedUri: "", //uri from previous step
+        uri: "", //todo: use same uri
+      },
+    });
   }
   catch {
     setUploadState("Error");
