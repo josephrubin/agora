@@ -8,7 +8,8 @@ import {
   Scripts,
   ScrollRestoration,
   useCatch,
-  LoaderFunction
+  LoaderFunction,
+  useLoaderData
 } from "remix";
 
 import styles from "./tailwind.css";
@@ -19,6 +20,11 @@ import { getAccessToken, refreshAccessTokenIfNeeded } from "./modules/session.se
 import { useAccessToken } from "./modules/session";
 
 import AgoraLogoImage from "../public/agora-logo.svg";
+import { useEffect } from "react";
+
+interface LoaderData {
+  readonly accessToken: string;
+}
 
 /**
  * This loader will run on every GET page request because it is at the root.
@@ -54,7 +60,7 @@ export const links: LinksFunction = () => [
 // https://remix.run/api/conventions#route-filenames
 export default function App() {
   return (
-    <Document>
+    <Document title="Agora">
       <Layout>
         <Outlet />
       </Layout>
@@ -157,7 +163,7 @@ function Layout({ children }: { children: React.ReactNode }) {
           <nav aria-label="Main navigation">
             <ul className="flex flex-row items-center gap-8">
               <li>
-                <NavLink to="/home">Home</NavLink>
+                <NavLink to="/">Home</NavLink>
               </li>
               {accessToken ? (
                 <li>
