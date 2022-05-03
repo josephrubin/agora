@@ -21,8 +21,8 @@ type Mutation {
   reorderCast(accessToken: String!, id: ID!, index: Int!): Cast
   """Transfer a cast to the given username. Returns the cast if successful, else null."""
   transferCast(accessToken: String!, id: ID!, username: String!): Cast
-  """Mark a Cast as exported to Solana. Returns the resultant Cast or null."""
-  exportCast(accessToken: String!, id: ID!, txId: String!): Cast
+  """Mark a Cast as exported to Solana to the given address. Returns the resultant Cast or null."""
+  exportCast(accessToken: String!, id: ID!, txId: String!, address: String!): Cast
 
   """
   Create a new user (sign up). As is standard, user/pass are passed over

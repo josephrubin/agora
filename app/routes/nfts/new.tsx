@@ -26,6 +26,8 @@ export const loader: LoaderFunction = async ({ request, params }) => {
 
 /* Submit a new Cast to the server. */
 export const action: ActionFunction = async ({ request }) => {
+  const accessToken = redirectToLoginIfNull(await getAccessToken(request));
+
   const formData = await request.formData();
 
   // Get and validate the inputs from the form.
@@ -33,8 +35,27 @@ export const action: ActionFunction = async ({ request }) => {
   if (!title) {
     return "error";
   }
+  const ipfsUrl = formData.get("ipfsUrl")?.toString();
+  if (!ipfsUrl) {
+    return "error";
+  }
 
-  // TODO: submit using createCast.
+  try {
+    await createCast({
+      accessToken: accessToken,
+      input: {
+        title: title,
+        mimeType: "image/*",
+        centralizedUri: ipfsUrl,
+        uri: ipfsUrl,
+      },
+    });
+  }
+  catch (err) {
+    console.log(String(err));
+  }
+
+  return redirect("/");
 };
 
 type UploadState = "Ready" | "Uploading" | "Done" | "Error";
@@ -50,7 +71,7 @@ export default function NewCast() {
   const uploadFormRef = createRef<HTMLFormElement>();
   const fileInputRef = createRef<HTMLInputElement>();
   const titleInputRef = createRef<HTMLInputElement>();
-  const accessTokenInputRef = createRef<HTMLInputElement>();
+  const ipfsUrlInputRef = createRef<HTMLInputElement>();
   const imgRef = createRef<HTMLImageElement>();
 
   const [uploadState, setUploadState] = useState<UploadState>("Ready");
@@ -60,7 +81,7 @@ export default function NewCast() {
       <h1 className="ml-4">Create an NFT</h1>
 
       { /* Upload recording button and hidden form. */ }
-      <form encType="multipart/form-data" ref={uploadFormRef} onSubmit={(event) => clientCreateCast(event, fileInputRef, titleInputRef, accessTokenInputRef, makePresignedUploadUrlEndpoint, setUploadState)}>
+      <Form method="post" action="/nfts/new" encType="multipart/form-data" ref={uploadFormRef}>
         <label className="flex flex-col gap-4">
           <div className="flex flex-row justify-between">
             <div className="flex items-center justify-center h-64 m-4 border-2 border-dashed border-zinc-400 w-96">
@@ -103,15 +124,15 @@ export default function NewCast() {
                 />
 
                 { /* This hidden input element contains the user's accessToken since we need it on the client side. */ }
-                <input type="hidden" name="accessToken" value={accessToken} />
+                <input type="hidden" name="ipfsUrl" ref={ipfsUrlInputRef} />
               </div>
 
               { /* Submit the form, doing most of the upload client-side. */ }
-              <button type="submit" className="my-4">Create NFT</button>
+              <button type="button" onClick={(event) => clientCreateCast(event, uploadFormRef, fileInputRef, titleInputRef, ipfsUrlInputRef, makePresignedUploadUrlEndpoint, setUploadState)} className="my-4">Create NFT</button>
             </div>
           </div>
         </label>
-      </form>
+      </Form>
     </section>
   );
 }
@@ -140,13 +161,18 @@ function showImagePreview(
  */
 async function clientCreateCast(
   event: React.FormEvent,
+  uploadFormRef: RefObject<HTMLFormElement>,
   fileInput: RefObject<HTMLInputElement>,
   titleInput: RefObject<HTMLInputElement>,
-  accessTokenInput: RefObject<HTMLInputElement>,
+  ipfsUrlInput: RefObject<HTMLInputElement>,
   makePresignedUploadUrlEndpoint: string,
   setUploadState: React.Dispatch<React.SetStateAction<UploadState>>
 ) {
-  event.preventDefault();
+  if (!uploadFormRef.current) {
+    return {
+      error: "No form found.",
+    };
+  }
 
   if (!fileInput.current?.files?.item(0)) {
     return {
@@ -160,118 +186,35 @@ async function clientCreateCast(
     };
   }
 
-  if (!accessTokenInput.current?.value) {
+  if (!ipfsUrlInput.current) {
     return {
-      error: "No access token given.",
+      error: "No input in which to place the IPFS URL.",
     };
   }
 
   const image = fileInput.current.files[0];
   const title = titleInput.current.value;
-  const accessToken = accessTokenInput.current.value;
+  const uploadFormRefBackup = uploadFormRef.current;
+  const ipfsUrlInputBackup = ipfsUrlInput.current;
+  const fileInputBackup = fileInput.current;
 
   try {
-    // First: get an authenticated (presigned) URL to the S3 bucket where we can directly upload our image.
-    const presignedUrl = await getPresignedUrlForImageUpload(makePresignedUploadUrlEndpoint, {
-      accessToken: accessToken, pieceId: piece.id,
-    });
+    setUploadState("Uploading");
 
-    // Second: upload the image to the bucket.
-    const centralizedImageUri = await userPresignedUrlToUploadImage(presignedUrl);
-
-    // Third: upload the image to IPFS.
+    // Upload the image to IPFS.
     const imageArrayBuffer = await image.arrayBuffer();
     const imageIpfsUri = await uploadImageToIpfs(imageArrayBuffer);
 
-    // Fourth: submit all this data to the server to create the cast.
-    await createCast({
-      accessToken: accessToken,
-      input: {
-        title: title,
-        mimeType: image.type, //todo
-        centralizedUri: "", //uri from previous step
-        uri: "", //todo: use same uri
-      },
-    });
-  }
-  catch {
-    setUploadState("Error");
-  }
-}
+    ipfsUrlInputBackup.value = imageIpfsUri;
 
-async function getPresignedUrlForImageUpload(makePresignedUploadUrlEndpoint: string, makePresignedUploadUrlRequestData: object) {
-  const response = await fetch(makePresignedUploadUrlEndpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(makePresignedUploadUrlRequestData),
-  });
-  if (response.status !== 200) {
-    setUploadState("Error");
-    return;
-  }
-  return (await response.json()).signedUrl;
-}
-
-async function userPresignedUrlToUploadImage(presignedUrl: string) {
-  const putResponse = await fetch(presignedUrl, {
-    method: "PUT",
-    body: await files[0].arrayBuffer(),
-  });
-  if (putResponse.status === 200) {
     setUploadState("Done");
+
+    // Submit all this data to the server to create the cast.
+    fileInputBackup.value = "";
+    uploadFormRefBackup.dispatchEvent(new Event("submit"));
   }
-  else {
+  catch (err) {
+    console.log(err);
     setUploadState("Error");
-  }
-}
-
-/** If the form's file input has a file, submit the form programmatically. */
-async function inputFileOnChange(
-  event: React.ChangeEvent<HTMLInputElement>,
-  makePresignedUploadUrlEndpoint: string,
-  makePresignedUploadUrlRequestData: object,
-  setUploadState: (state: UploadState) => void,
-  form: HTMLFormElement | null
-) {
-  if (form) {
-    const files = event.target.files;
-    if (files && files.length >= 1 && files[0]) {
-      try {
-        setUploadState("Uploading");
-
-        // Client uploading of audio files has two parts.
-        // 1. Get a presigned URL.
-        const response = await fetch(makePresignedUploadUrlEndpoint, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(makePresignedUploadUrlRequestData),
-        });
-        if (response.status !== 200) {
-          setUploadState("Error");
-          return;
-        }
-
-        // 2. Now that we have a presigned URL, PUT the audio file at the URL.
-        // Note: we don't use FormData because we want to post only the audio bytes.
-        const responseData = await response.json();
-        const putResponse = await fetch(responseData.signedUrl, {
-          method: "PUT",
-          body: await files[0].arrayBuffer(),
-        });
-        if (putResponse.status === 200) {
-          setUploadState("Done");
-        }
-        else {
-          setUploadState("Error");
-        }
-      }
-      catch {
-        setUploadState("Error");
-      }
-    }
   }
 }

@@ -208,9 +208,15 @@ const lambdaHandler: AsrLambdaHandler = async (event) => {
             userId: decodedAccessToken.sub,
             id: transferCastArgs.id,
           },
-          UpdateExpression: "SET userId = :u",
+          UpdateExpression: "SET userId = :u, SET history = list_append(if_not_exists(history, :empty_list), :h)",
           ExpressionAttributeValues: {
-            ":c": sub,
+            ":u": sub,
+            ":empty_list": [],
+            ":h": [{
+              epoch: Math.floor(new Date().getTime() / 1000),
+              event: "transfer",
+              target: transferCastArgs.username,
+            }],
           },
           ReturnValues: "ALL_NEW",
         });
@@ -245,9 +251,15 @@ const lambdaHandler: AsrLambdaHandler = async (event) => {
             userId: decodedAccessToken.sub,
             id: exportCastArgs.id,
           },
-          UpdateExpression: "SET txId = :s",
+          UpdateExpression: "SET txId = :s, SET history = list_append(if_not_exists(history, :empty_list), :h)",
           ExpressionAttributeValues: {
             ":s": exportCastArgs.txId,
+            ":empty_list": [],
+            ":h": [{
+              epoch: Math.floor(new Date().getTime() / 1000),
+              event: "export",
+              target: exportCastArgs.address,
+            }],
           },
           ReturnValues: "ALL_NEW",
         });
