@@ -54,11 +54,13 @@ a.active {
 }
 
 .gradient {
+  /*
   background: rgb(0,28,110);
   background: -moz-linear-gradient(90deg, rgba(0,28,110,0.3477591720281863) 0%, rgba(255,255,255,0) 50%, rgba(0,28,110,0.3533614129245448) 100%);
   background: -webkit-linear-gradient(90deg, rgba(0,28,110,0.3477591720281863) 0%, rgba(255,255,255,0) 50%, rgba(0,28,110,0.3533614129245448) 100%);
   background: linear-gradient(90deg, rgba(0,28,110,0.3477591720281863) 0%, rgba(255,255,255,0) 50%, rgba(0,28,110,0.3533614129245448) 100%);
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr="#001c6e",endColorstr="#001c6e",GradientType=1); 
+  */
 }
 
 .topography {
