@@ -74,14 +74,16 @@ export function ErrorBoundary({ error }: { error: Error }) {
   return (
     <Document title="Error!">
       <Layout>
-        <div>
-          <h1>There was an error</h1>
+        <div className="flex flex-col justify-center w-full gap-4 mt-24 text-center">
+          <h1>There was an error!</h1>
+          <p>Please try again</p>
+          {/* <h1>There was an error</h1>
           <p>{error.message}</p>
           <hr />
           <p>
             Hey, developer, you should replace this with what you want your
             users to see.
-          </p>
+          </p> */}
         </div>
       </Layout>
     </Document>
@@ -163,9 +165,7 @@ function Layout({ children }: { children: React.ReactNode }) {
             </Link>
             <nav aria-label="Main navigation">
               <ul className="flex flex-row items-center gap-8">
-                <li>
-                  <NavLink to="/">Home</NavLink>
-                </li>
+
                 {!accessToken ? (
                   <>
                     <li>
@@ -175,14 +175,17 @@ function Layout({ children }: { children: React.ReactNode }) {
                       <NavLink to="sign-up">Sign Up</NavLink>
                     </li>
                   </>
-                ) : null}
-                {accessToken ? (
+                ) : (<>
+                  <li>
+                    <NavLink to="/">Home</NavLink>
+                  </li>
                   <li>
                     <form method="post" action="/logout">
                       <input type="submit" value="Log Out" />
                     </form>
                   </li>
-                ) : null}
+                </>
+                )}
               </ul>
             </nav>
           </header>

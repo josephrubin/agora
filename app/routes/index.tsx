@@ -8,6 +8,7 @@ import { useState } from "react";
 
 import NftDetails from "~/components/nft-details";
 import AddNFTModal from "~/components/add-nft-modal";
+import { Spinner } from "~/components/spinner";
 
 interface LoaderData {
   readonly casts: Cast[];
@@ -60,13 +61,15 @@ export default function CastsLayout() {
   const [modalData, setModalData] = useState<Cast | null>(null);
 
   const NFTCard = ({cast}: {cast: Cast}) =>
-    (<div className="relative w-full h-40 overflow-hidden border-2 shadow-inner min-w-56 rounded-2xl"
+  { const [loaded, setLoaded] = useState(false);
+    return (<div className="relative w-full h-40 overflow-hidden border-2 shadow-inner min-w-56 rounded-2xl"
       onClick={() => {setModalData(cast); setModalOpen(true);}}
-    >
+            >
       <div className="absolute inset-0 w-full h-full hover:bg-zinc-600/20" />
-      <img className="object-cover w-full h-full" src={cast.uri} />
+      <img className="object-cover w-full h-full" src={cast.uri} onLoad={() => setLoaded(true)}/>
+      {!loaded ? <div className="absolute mx-auto my-auto"><Spinner /></div> : null}
     </div>
-    );
+    );};
 
   return (
     <div className="flex flex-col gap-4 my-8">
@@ -87,6 +90,7 @@ export default function CastsLayout() {
           title={modalData?.title ?? "Title Not Found"}
           imageUri={modalData?.uri ?? "https://gateway.ipfs.io/ipfs/QmcWusCimgGuoqwYXw7KecSv4sGY82qFfnkqQgvPdiPyHa?ext=jpeg"}
           history={modalData?.history ?? []}
+          txId={modalData?.txId ?? undefined}
         />
       </Modal>
     </div>
