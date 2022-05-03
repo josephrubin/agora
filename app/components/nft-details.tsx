@@ -1,5 +1,6 @@
 // Adds Solana wallet context. See https://github.com/solana-labs/wallet-adapter
 import { useMemo } from "react";
+import { Form } from "remix";
 import { ConnectionProvider, WalletProvider } from "@solana/wallet-adapter-react";
 import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
 import {
@@ -22,6 +23,7 @@ import ExportNFT from "~/components/export-nft";
 import { HistoryItem } from "~/generated/graphql-schema";
 
 function NFTDetails(props: {
+  id: string,
   title: string,
   imageUri: string,
   history: HistoryItem[]
@@ -52,7 +54,7 @@ function NFTDetails(props: {
     <ConnectionProvider endpoint={endpoint}>
       <WalletProvider wallets={wallets} autoConnect>
         <WalletModalProvider>
-          <NftDetailsView title={props.title} imageUri={props.imageUri} history={props.history} />
+          <NftDetailsView id={props.id} title={props.title} imageUri={props.imageUri} history={props.history} />
         </WalletModalProvider>
       </WalletProvider>
     </ConnectionProvider>
@@ -63,6 +65,7 @@ function NFTDetails(props: {
  * Content showed on the modal when an NFT is clicked
  */
 const NftDetailsView = (props: {
+  id: string,
   title: string,
   imageUri: string,
   history: HistoryItem[]
@@ -80,7 +83,7 @@ const NftDetailsView = (props: {
           <div className="flex flex-row justify-between gap-4">
             <WalletMultiButton />
             <WalletDisconnectButton />
-            <ExportNFT title={props.title} imageUri={props.imageUri} imageType="image/png" />
+            <ExportNFT id={props.id} title={props.title} imageUri={props.imageUri} imageType="image/png" />
           </div>
           <hr className="my-2" />
           <h2>Transaction History</h2>
@@ -90,10 +93,11 @@ const NftDetailsView = (props: {
             }
           </ol>
           <hr className="my-2"/>
-          <form className="flex flex-row w-full gap-4">
-            <input type="text" placeholder="Transfer to Username" className="flex-grow"></input>
+          <Form method="post" className="flex flex-row w-full gap-4">
+            <input type="text" placeholder="Transfer to Username" name="destination" className="flex-grow" />
+            <input type="hidden" name="id" value={props.id} />
             <button type="submit" value="Transfer">Transfer</button>
-          </form>
+          </Form>
         </div>
       </div>
     </div>

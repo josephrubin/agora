@@ -39,6 +39,8 @@ export const action: ActionFunction = async ({ request }) => {
     };
   }
 
+  console.log("trying transfer to " + destination);
+
   // For now, assume this is a transfer to another user.
   return await transferCast({
     accessToken,
@@ -71,7 +73,7 @@ export default function CastsLayout() {
       <h1>My NFTs</h1>
       <div className="grid gap-4 grid-cols-fill-52">
         <AddNFTModal />
-        {casts.map((c, i) => <NFTCard cast={c} key={i}/>)}
+        {sortedCasts.map((c, i) => <NFTCard cast={c} key={i}/>)}
       </div>
       <Modal
         isOpen={modalOpen}
@@ -81,6 +83,7 @@ export default function CastsLayout() {
       >
         <span onClick={() => setModalOpen(false)} className="absolute text-2xl cursor-pointer top-2 right-4">&times;</span>
         <NftDetails
+          id={modalData?.id ?? "Id Not Found"}
           title={modalData?.title ?? "Title Not Found"}
           imageUri={modalData?.uri ?? "https://gateway.ipfs.io/ipfs/QmcWusCimgGuoqwYXw7KecSv4sGY82qFfnkqQgvPdiPyHa?ext=jpeg"}
           history={modalData?.history ?? []}

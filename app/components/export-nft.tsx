@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { createRef, useState } from "react";
 import { Button } from "antd";
 import { useWallet, useConnection } from  "@solana/wallet-adapter-react";
 import { WalletNotConnectedError } from "@solana/wallet-adapter-base";
@@ -7,9 +7,11 @@ import { mintNFT } from "../actions/mintNFT";
 import { uploadMetadataToIpfs } from "../utils/ipfs";
 import { Data, CreatorClass } from "~/types";
 import { exportCast } from "~/modules/casts.server";
+import { useSubmit, Form, useFetcher } from "remix";
 
 
 const ExportNFT = (props: {
+  id: string,
   title: string,
   imageUri: string,
   imageType: string,
@@ -24,6 +26,8 @@ const ExportNFT = (props: {
   const title = props.title || "Banana";
   const imageUri = props.imageUri || "https://gateway.ipfs.io/ipfs/QmcWusCimgGuoqwYXw7KecSv4sGY82qFfnkqQgvPdiPyHa?ext=jpeg";
   const imageType = props.imageType || "image/png";
+
+  const fetcher = useFetcher();
 
   const mint = async() => {
     if (!walletConnected) throw new WalletNotConnectedError();
@@ -57,13 +61,18 @@ const ExportNFT = (props: {
         const mintUrl = "https://explorer.solana.com/tx/" + mintTxId + "?cluster=devnet";
         console.log("Success 😎! Check out your newly minted NFT at: " + mintUrl);
 
-        // TODO: Now let the backend know we've exported.
-        /*await exportCast({
-
-        });*/
-
         setFinishedMinting(true);
         setMintUrl(mintUrl);
+
+        // TODO: Now let the backend know we've exported.
+        fetcher.submit(
+          {
+            address: wallet?.publicKey?.toBase58(),
+            id: props.id,
+            txId: mintTxId,
+          },
+          { method: "post", action: "/nfts/export" }
+        );
       }
 
     } catch (e: any) {
@@ -73,20 +82,22 @@ const ExportNFT = (props: {
   };
 
   return (
-    <Button
-      type="primary"
-      name="mint"
-      disabled={!walletConnected}
-      htmlType="submit"
-      size="large"
-      onClick={() => {
-        finishedMinting ? window.open(mintUrl) : mint();
-      }}
-    >
-      <div className="flex flex-row items-center justify-center">
-        {finishedMinting ? "View on Solana " : "Export "}
-      </div>
-    </Button>
+    <>
+      <Button
+        type="primary"
+        name="mint"
+        disabled={!walletConnected}
+        htmlType="submit"
+        size="large"
+        onClick={() => {
+          finishedMinting ? window.open(mintUrl) : mint();
+        }}
+      >
+        <div className="flex flex-row items-center justify-center">
+          {finishedMinting ? "View on Solana " : "Export "}
+        </div>
+      </Button>
+    </>
   );
 };
 

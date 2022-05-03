@@ -208,15 +208,15 @@ const lambdaHandler: AsrLambdaHandler = async (event) => {
             userId: decodedAccessToken.sub,
             id: transferCastArgs.id,
           },
-          UpdateExpression: "SET userId = :u, SET history = list_append(if_not_exists(history, :empty_list), :h)",
+          UpdateExpression: "SET userId = :u",//, SET history = list_append(if_not_exists(history, :empty_list), :h)",
           ExpressionAttributeValues: {
             ":u": sub,
-            ":empty_list": [],
-            ":h": [{
+            //":empty_list": [],
+            /*":h": [{
               epoch: Math.floor(new Date().getTime() / 1000),
               event: "transfer",
               target: transferCastArgs.username,
-            }],
+            }],*/
           },
           ReturnValues: "ALL_NEW",
         });
@@ -225,7 +225,7 @@ const lambdaHandler: AsrLambdaHandler = async (event) => {
         return updatedCast.Attributes;
       }
       catch {
-        throw `Could not transfer cast ${transferCastArgs.id}`;
+        throw `Could not transfer cast ${transferCastArgs.id} to ${sub}.`;
       }
     }
     else if (fieldName === "exportCast") {
