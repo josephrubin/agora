@@ -1,5 +1,5 @@
-import { useLoaderData, Outlet, Link, LoaderFunction } from "remix";
-import { readCasts } from "~/modules/casts.server";
+import { useLoaderData, Outlet, Link, LoaderFunction, Form, ActionFunction } from "remix";
+import { readCasts, transferCast } from "~/modules/casts.server";
 import { Cast } from "~/generated/graphql-schema";
 import { getAccessToken, redirectToLoginIfNull } from "~/modules/session.server";
 
@@ -17,6 +17,32 @@ export const loader: LoaderFunction = async ({request}) => {
   const accessToken = redirectToLoginIfNull(await getAccessToken(request));
 
   return { casts: await readCasts(accessToken) };
+};
+
+export const action: ActionFunction = async ({ request }) => {
+  const accessToken = redirectToLoginIfNull(await getAccessToken(request));
+  const formData = await request.formData();
+
+  const destination = String(formData.get("destination"));
+  const castId = String(formData.get("id"));
+
+  if (!destination) {
+    return {
+      error: "no destination given.",
+    };
+  }
+  if (!castId) {
+    return {
+      error: "which NFT should I transfer?",
+    };
+  }
+
+  // For now, assume this is a transfer to another user.
+  return await transferCast({
+    accessToken,
+    id: castId,
+    username: destination,
+  });
 };
 
 export default function CollectionsLayout() {

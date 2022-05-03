@@ -71,7 +71,7 @@ const ExportNFT = (props: {
       disabled={!wallet.publicKey}
       htmlType="submit"
       size="large"
-      style={{ padding: 10 }}
+      style={{ padding: 10, borderColor: !wallet.publicKey ? "grey" : "white", color: !wallet.publicKey ? "grey" : "white" }}
       onClick={() => {
         finishedMinting ? window.open(mintUrl) : mint();
       }}
