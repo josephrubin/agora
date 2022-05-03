@@ -56,53 +56,55 @@ export default function NewCast() {
   const [uploadState, setUploadState] = useState<UploadState>("Ready");
 
   return (
-    <section className="flex flex-col gap-4 py-8">
+    <section className="flex flex-col gap-4">
       <h1 className="ml-4">Create an NFT</h1>
 
       { /* Upload recording button and hidden form. */ }
       <form encType="multipart/form-data" ref={uploadFormRef} onSubmit={(event) => clientCreateCast(event, fileInputRef, titleInputRef, accessTokenInputRef, makePresignedUploadUrlEndpoint, setUploadState)}>
         <label className="flex flex-col gap-4">
           <div className="flex flex-row justify-between">
-            <div className="flex w-1/2 m-4 border-dashed border-2 border-gray-600 justify-center items-center">
+            <div className="flex items-center justify-center h-64 m-4 border-2 border-dashed border-zinc-400 w-96">
               { /* This is a preview box which shows the image the user has uploaded. */ }
-              <img className="max-w-lg max-h-lg rounded-lg p-3" ref={imgRef} />
+              <img className="object-contain w-full h-full p-3 border-none rounded-lg" ref={imgRef} />
             </div>
-            <div className="flex flex-col w-1/2">
+            <div className="flex flex-col justify-around flex-grow">
               { /* The input box for the NFT title. The title is used later when exporting to the chain. */ }
-              <input
-                type="text"
-                name="title"
-                maxLength={50}
-                placeholder="Give a title"
-                className="my-4"
-                ref={titleInputRef}
-              />
+              <div>
+                <input
+                  type="text"
+                  name="title"
+                  maxLength={50}
+                  placeholder="Title"
+                  className="w-full my-4"
+                  ref={titleInputRef}
+                />
 
-              { /* This is a custom button which delegates clicks to the hidden file input field. We can style it however we want. */ }
-              <button type="button" disabled={uploadState !== "Ready"} onClick={() => fileInputRef.current?.click()} className="my-4">Upload Image</button>
-              { /* If we are uploading, add a Spinner. */ }
-              <span className="upload-status-hint">{uploadState === "Uploading" && <Spinner />}</span>
+                { /* This is a custom button which delegates clicks to the hidden file input field. We can style it however we want. */ }
+                <button type="button" disabled={uploadState !== "Ready"} onClick={() => fileInputRef.current?.click()} className="w-full">Upload Image</button>
+                { /* If we are uploading, add a Spinner. */ }
+                <span className="upload-status-hint">{uploadState === "Uploading" && <Spinner />}</span>
 
-              { /* If there was an error, just tell the user. Not much else to do. */ }
-              <span className="upload-status-hint">{uploadState === "Error" && <span className="error">Error ocurred during NFT creation.</span>}</span>
+                { /* If there was an error, just tell the user. Not much else to do. */ }
+                <span className="upload-status-hint">{uploadState === "Error" && <span className="error">Error ocurred during NFT creation.</span>}</span>
 
-              { /* On success. */ }
-              <span className="upload-status-hint">{uploadState === "Done" && <span>✅ NFT Created!</span>}</span>
+                { /* On success. */ }
+                <span className="upload-status-hint">{uploadState === "Done" && <span>✅ NFT Created!</span>}</span>
 
-              { /* The actual image upload input field. We make it hidden for prettiness. */}
-              <input
-                type="file"
-                name="imageFile"
-                accept="image/*"
-                ref={fileInputRef}
-                style={{display: "none"}}
-                onChange={
-                  (e) => showImagePreview(e, imgRef)
-                }
-              />
+                { /* The actual image upload input field. We make it hidden for prettiness. */}
+                <input
+                  type="file"
+                  name="imageFile"
+                  accept="image/*"
+                  ref={fileInputRef}
+                  style={{display: "none"}}
+                  onChange={
+                    (e) => showImagePreview(e, imgRef)
+                  }
+                />
 
-              { /* This hidden input element contains the user's accessToken since we need it on the client side. */ }
-              <input type="hidden" name="accessToken" value={accessToken} />
+                { /* This hidden input element contains the user's accessToken since we need it on the client side. */ }
+                <input type="hidden" name="accessToken" value={accessToken} />
+              </div>
 
               { /* Submit the form, doing most of the upload client-side. */ }
               <button type="submit" className="my-4">Create NFT</button>

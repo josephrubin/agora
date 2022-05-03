@@ -46,7 +46,7 @@
     @apply w-fit;
     @apply px-4;
     @apply py-2;
-    @apply hover:bg-zinc-800
+    @apply hover:bg-zinc-700
   }
 }
 
