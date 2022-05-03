@@ -91,7 +91,7 @@ const NftDetailsView = (props: {
           </ol>
           <hr className="my-2"/>
           <form className="flex flex-row w-full gap-4">
-            <input type="text" placeholder="Transfer to Email or Wallet" className="flex-grow"></input>
+            <input type="text" placeholder="Transfer to Username" className="flex-grow"></input>
             <button type="submit" value="Transfer">Transfer</button>
           </form>
         </div>

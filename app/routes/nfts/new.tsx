@@ -4,7 +4,9 @@ import { Spinner } from "~/components/spinner";
 import { CastInput } from "~/generated/graphql-schema";
 import { createCast, exportCast, reorderCast, transferCast, readCast, readCasts } from "~/modules/casts.server";
 import { MAKE_PRESIGNED_UPLOAD_URL_ENDPOINT } from "~/modules/media.server";
+import { useAccessToken } from "~/modules/session";
 import { getAccessToken, redirectToLoginIfNull } from "~/modules/session.server";
+import { uploadImageToIpfs } from "~/utils/ipfs";
 
 interface LoaderData {
   // The HTTP endpoint to hit to get a presigned URL for image upload.
@@ -39,52 +41,73 @@ type UploadState = "Ready" | "Uploading" | "Done" | "Error";
 
 export default function NewCast() {
   const { makePresignedUploadUrlEndpoint } = useLoaderData<LoaderData>();
+  const accessToken = useAccessToken();
+
+  if (!accessToken) {
+    throw "Impossible; no access token on this page.";
+  }
 
   const uploadFormRef = createRef<HTMLFormElement>();
   const fileInputRef = createRef<HTMLInputElement>();
+  const titleInputRef = createRef<HTMLInputElement>();
+  const accessTokenInputRef = createRef<HTMLInputElement>();
   const imgRef = createRef<HTMLImageElement>();
 
   const [uploadState, setUploadState] = useState<UploadState>("Ready");
 
   return (
     <section className="flex flex-col gap-4 py-8">
-      <h1>Create an NFT</h1>
+      <h1 className="ml-4">Create an NFT</h1>
 
       { /* Upload recording button and hidden form. */ }
-      <form encType="multipart/form-data" ref={uploadFormRef} onSubmit={(event) => clientCreateCast(event, fileInputRef, makePresignedUploadUrlEndpoint)}>
+      <form encType="multipart/form-data" ref={uploadFormRef} onSubmit={(event) => clientCreateCast(event, fileInputRef, titleInputRef, accessTokenInputRef, makePresignedUploadUrlEndpoint, setUploadState)}>
         <label className="flex flex-col gap-4">
-          { /* The input box for the NFT title. The title is used later when exporting to the chain. */ }
-          <input type="text" name="title" />
+          <div className="flex flex-row justify-between">
+            <div className="flex w-1/2 m-4 border-dashed border-2 border-gray-600 justify-center items-center">
+              { /* This is a preview box which shows the image the user has uploaded. */ }
+              <img className="max-w-lg max-h-lg rounded-lg p-3" ref={imgRef} />
+            </div>
+            <div className="flex flex-col w-1/2">
+              { /* The input box for the NFT title. The title is used later when exporting to the chain. */ }
+              <input
+                type="text"
+                name="title"
+                maxLength={50}
+                placeholder="Give a title"
+                className="my-4"
+                ref={titleInputRef}
+              />
 
-          { /* This is a custom button which delegates clicks to the hidden file input field. We can style it however we want. */ }
-          <button type="button" disabled={uploadState !== "Ready"} onClick={() => fileInputRef.current?.click()}>Upload Image</button>
+              { /* This is a custom button which delegates clicks to the hidden file input field. We can style it however we want. */ }
+              <button type="button" disabled={uploadState !== "Ready"} onClick={() => fileInputRef.current?.click()} className="my-4">Upload Image</button>
+              { /* If we are uploading, add a Spinner. */ }
+              <span className="upload-status-hint">{uploadState === "Uploading" && <Spinner />}</span>
 
-          { /* This is a preview box which shows the image the user has uploaded. */ }
-          <img className="max-w-lg max-h-lg" ref={imgRef} />
+              { /* If there was an error, just tell the user. Not much else to do. */ }
+              <span className="upload-status-hint">{uploadState === "Error" && <span className="error">Error ocurred during NFT creation.</span>}</span>
 
-          { /* If we are uploading, add a Spinner. */ }
-          <span className="upload-status-hint">{uploadState === "Uploading" && <Spinner />}</span>
+              { /* On success. */ }
+              <span className="upload-status-hint">{uploadState === "Done" && <span>✅ NFT Created!</span>}</span>
 
-          { /* If there was an error, just tell the user. Not much else to do. */ }
-          <span className="upload-status-hint">{uploadState === "Error" && <span className="error">Error ocurred during NFT creation.</span>}</span>
+              { /* The actual image upload input field. We make it hidden for prettiness. */}
+              <input
+                type="file"
+                name="imageFile"
+                accept="image/*"
+                ref={fileInputRef}
+                style={{display: "none"}}
+                onChange={
+                  (e) => showImagePreview(e, imgRef)
+                }
+              />
 
-          { /* On success. */ }
-          <span className="upload-status-hint">{uploadState === "Done" && <span>✅ NFT Created!</span>}</span>
+              { /* This hidden input element contains the user's accessToken since we need it on the client side. */ }
+              <input type="hidden" name="accessToken" value={accessToken} />
 
-          { /* The actual image upload input field. We make it hidden for prettiness. */}
-          <input
-            type="file"
-            name="imageFile"
-            accept="image/*"
-            ref={fileInputRef}
-            style={{display: "none"}}
-            onChange={
-              (e) => showImagePreview(e, imgRef)
-            }
-          />
-
-          { /* Submit the form, doing most of the upload client-side. */ }
-          <button type="submit">Create NFT!</button>
+              { /* Submit the form, doing most of the upload client-side. */ }
+              <button type="submit" className="my-4">Create NFT</button>
+            </div>
+          </div>
         </label>
       </form>
     </section>
@@ -113,16 +136,37 @@ function showImagePreview(
  * Handle the submission of the form to create a Cast.
  * We don't just use traditional form submission (Remix style) because the process is a bit more involved.
  */
-async function clientCreateCast(event: React.FormEvent, fileInput: RefObject<HTMLInputElement>, makePresignedUploadUrlEndpoint: string) {
+async function clientCreateCast(
+  event: React.FormEvent,
+  fileInput: RefObject<HTMLInputElement>,
+  titleInput: RefObject<HTMLInputElement>,
+  accessTokenInput: RefObject<HTMLInputElement>,
+  makePresignedUploadUrlEndpoint: string,
+  setUploadState: React.Dispatch<React.SetStateAction<UploadState>>
+) {
   event.preventDefault();
 
   if (!fileInput.current?.files?.item(0)) {
     return {
-      error: "No file uploaded",
+      error: "No file uploaded.",
+    };
+  }
+
+  if (!titleInput.current?.value) {
+    return {
+      error: "No title given.",
+    };
+  }
+
+  if (!accessTokenInput.current?.value) {
+    return {
+      error: "No access token given.",
     };
   }
 
   const image = fileInput.current.files[0];
+  const title = titleInput.current.value;
+  const accessToken = accessTokenInput.current.value;
 
   try {
     // First: get an authenticated (presigned) URL to the S3 bucket where we can directly upload our image.
@@ -134,9 +178,19 @@ async function clientCreateCast(event: React.FormEvent, fileInput: RefObject<HTM
     const centralizedImageUri = await userPresignedUrlToUploadImage(presignedUrl);
 
     // Third: upload the image to IPFS.
-    const imageIpfsUri = null;
+    const imageArrayBuffer = await image.arrayBuffer();
+    const imageIpfsUri = await uploadImageToIpfs(imageArrayBuffer);
 
     // Fourth: submit all this data to the server to create the cast.
+    await createCast({
+      accessToken: accessToken,
+      input: {
+        title: title,
+        mimeType: image.type, //todo
+        centralizedUri: "", //uri from previous step
+        uri: "", //todo: use same uri
+      },
+    });
   }
   catch {
     setUploadState("Error");

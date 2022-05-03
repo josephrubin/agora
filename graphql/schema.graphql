@@ -65,6 +65,7 @@ type Cast {
 }
 
 input CastInput {
+  title: String!
   mimeType: String!
   uri: String!
   centralizedUri: String!
