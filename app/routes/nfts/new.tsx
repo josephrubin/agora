@@ -102,15 +102,16 @@ export default function NewCast() {
 
                 { /* This is a custom button which delegates clicks to the hidden file input field. We can style it however we want. */ }
                 <button type="button" disabled={uploadState !== "Ready"} onClick={() => fileInputRef.current?.click()} className="w-full">Upload Image</button>
-                { /* If we are uploading, add a Spinner. */ }
-                <span className="upload-status-hint">{uploadState === "Uploading" && <Spinner />}</span>
+                <div className="my-8">
+                  { /* If we are uploading, add a Spinner. */ }
+                  <span className="upload-status-hint">{uploadState === "Uploading" && <Spinner />}</span>
 
-                { /* If there was an error, just tell the user. Not much else to do. */ }
-                <span className="upload-status-hint">{uploadState === "Error" && <span className="error">Error ocurred during NFT creation.</span>}</span>
+                  { /* If there was an error, just tell the user. Not much else to do. */ }
+                  <span className="upload-status-hint">{uploadState === "Error" && <span className="error">Error ocurred during NFT creation.</span>}</span>
 
-                { /* On success. */ }
-                <span className="upload-status-hint">{uploadState === "Done" && <span>✅ NFT Created!</span>}</span>
-
+                  { /* On success. */ }
+                  <span className="upload-status-hint">{uploadState === "Done" && <span>✅ NFT Created!</span>}</span>
+                </div>
                 { /* The actual image upload input field. We make it hidden for prettiness. */}
                 <input
                   type="file"
