@@ -141,6 +141,7 @@ const lambdaHandler: AsrLambdaHandler = async (event) => {
       // TODO: deal with index later.
       const cast: Cast = {
         id: uuidv4(),
+        title: createCastArgs.input.title,
         index: -1,
         mimeType: createCastArgs.input.mimeType,
         uri: createCastArgs.input.uri,
