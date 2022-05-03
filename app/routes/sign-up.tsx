@@ -48,20 +48,24 @@ export default function SignUp() {
   }
   else {
     return (
-      <Form method="post" className="flex flex-col gap-4 my-8">
-        <h1>Sign Up</h1>
-        <p>
-          Join to start creating and trading NFTs.
-        </p>
-        <div>
-          <input name="username" placeholder="Username" type="text" />
+      <div className="flex flex-col items-center gap-8 my-16">
+        <div className="flex flex-row justify-center w-full h-24 gap-4">
+          <h1 className="title">Agora</h1>
         </div>
-        <div>
-          <input name="password" placeholder="Password" type="password" />
-        </div>
-        { actionData?.error && <p className="error">{actionData.error}</p> }
-        <input type="submit" value="Sign Up" />
-      </Form>
+        <h3>Join to start creating and transferring NFTs on Solana</h3>
+        <Form method="post" className="flex flex-col items-center gap-y-4">
+          <div>
+            <input className="w-80" name="username" placeholder="Username" type="text" />
+          </div>
+          <div>
+            <input className="w-80" name="password" placeholder="Password" type="password" />
+          </div>
+          <div className="flex items-center gap-4">
+            { actionData?.error && <p className="error">{actionData.error}</p> }
+            <input type="submit" value="Sign Up" />
+          </div>
+        </Form>
+      </div>
     );
   }
 }
