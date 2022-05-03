@@ -1,5 +1,5 @@
 import { useLoaderData, Outlet, Link, LoaderFunction, Form, ActionFunction } from "remix";
-import { /* readCasts, */ transferCast } from "~/modules/casts.server";
+import { readCasts, transferCast } from "~/modules/casts.server";
 import { Cast } from "~/generated/graphql-schema";
 import { getAccessToken, redirectToLoginIfNull } from "~/modules/session.server";
 
@@ -9,8 +9,6 @@ import { useState } from "react";
 import NftDetails from "~/components/nft-details";
 import AddNFTModal from "~/components/add-nft-modal";
 
-import { readCasts } from "~/modules/mocks/casts.server";
-
 interface LoaderData {
   readonly casts: Cast[];
 }
@@ -18,7 +16,9 @@ interface LoaderData {
 export const loader: LoaderFunction = async ({request}) => {
   const accessToken = redirectToLoginIfNull(await getAccessToken(request));
 
-  return { casts: await readCasts({accessToken}) };
+  const casts = await readCasts(accessToken);
+
+  return { casts: casts };
 };
 
 export const action: ActionFunction = async ({ request }) => {
