@@ -76,7 +76,7 @@ export default function CastsLayout() {
       <Modal
         isOpen={modalOpen}
         onRequestClose={() => setModalOpen(false)}
-        className="absolute p-8 overflow-y-auto text-white rounded-lg min-h-fit bg-zinc-800 inset-40"
+        className="relative p-8 mx-auto overflow-y-auto text-white rounded-lg mt-28 w-fit h-fit bg-zinc-800"
         overlayClassName="bg-zinc-400/50 fixed inset-0"
       >
         <span onClick={() => setModalOpen(false)} className="absolute text-2xl cursor-pointer top-2 right-4">&times;</span>

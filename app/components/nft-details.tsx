@@ -77,7 +77,7 @@ const NftDetailsView = (props: {
           </div>
         </div>
         <div className="flex flex-col w-full gap-2">
-          <div className="flex flex-row justify-between">
+          <div className="flex flex-row justify-between gap-4">
             <WalletMultiButton />
             <WalletDisconnectButton />
             <ExportNFT title={props.title} imageUri={props.imageUri} imageType="image/png" />
