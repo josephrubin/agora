@@ -39,7 +39,7 @@ export default function LogIn() {
 
   return (
     <div className="flex flex-col items-center gap-8 my-16">
-      <div className="flex flex-row h-24 gap-4">
+      <div className="flex flex-row justify-center w-full h-24 gap-4">
         <img className="max-h-full" height="fit" src={AgoraLogoImage}/>
         <h1 className="title">Agora</h1>
       </div>
