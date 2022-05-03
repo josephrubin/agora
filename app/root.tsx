@@ -171,7 +171,7 @@ function Layout({ children }: { children: React.ReactNode }) {
               ) : null}
               {accessToken ? (
                 <li>
-                  <form method="post" action="logout">
+                  <form method="post" action="/logout">
                     <input type="submit" value="Log Out" />
                   </form>
                 </li>
@@ -182,7 +182,7 @@ function Layout({ children }: { children: React.ReactNode }) {
         <main>{children}</main>
       </div>
       <footer className="flex flex-row justify-center py-4 border-t">
-        <p>&copy; Agora 2021</p>
+        <p>&copy; Agora 2022</p>
       </footer>
     </div>
   );
