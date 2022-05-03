@@ -15,6 +15,7 @@ const ExportNFT = (props: {
 }) => {
   const { connection } = useConnection();
   const wallet = useWallet();
+  const walletConnected = wallet.publicKey;
 
   const [finishedMinting, setFinishedMinting] = useState<boolean>(false);
   const [mintUrl, setMintUrl] = useState<string>("");
@@ -24,7 +25,7 @@ const ExportNFT = (props: {
   const imageType = props.imageType || "image/png";
 
   const mint = async() => {
-    if (!wallet.publicKey) throw new WalletNotConnectedError();
+    if (!walletConnected) throw new WalletNotConnectedError();
 
     const creator = new CreatorClass({
       address: wallet?.publicKey?.toBase58(),
@@ -68,10 +69,14 @@ const ExportNFT = (props: {
     <Button
       type="primary"
       name="mint"
-      disabled={!wallet.publicKey}
+      disabled={!walletConnected}
       htmlType="submit"
       size="large"
-      style={{ padding: 10, borderColor: !wallet.publicKey ? "grey" : "white", color: !wallet.publicKey ? "grey" : "white" }}
+      style={{
+        padding: 10,
+        borderColor: !walletConnected ? "grey" : "white",
+        color: !walletConnected ? "grey" : "white",
+      }}
       onClick={() => {
         finishedMinting ? window.open(mintUrl) : mint();
       }}
