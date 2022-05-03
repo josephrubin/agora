@@ -49,48 +49,53 @@ export default function NewCast() {
 
   return (
     <section className="flex flex-col gap-4 py-8">
-      <h1>Create an NFT</h1>
+      <h1 className="ml-4">Create an NFT</h1>
 
       { /* Upload recording button and hidden form. */ }
       <form encType="multipart/form-data" ref={uploadFormRef} onSubmit={(event) => clientCreateCast(event, fileInputRef, makePresignedUploadUrlEndpoint)}>
         <label className="flex flex-col gap-4">
-          { /* The input box for the NFT title. The title is used later when exporting to the chain. */ }
-          <input
-            type="text"
-            name="title"
-            maxLength={50}
-            placeholder="Give a title"
-          />
+          <div className="flex flex-row justify-between">
+            <div className="flex w-1/2 m-4 border-dashed border-2 border-gray-600 justify-center items-center">
+              { /* This is a preview box which shows the image the user has uploaded. */ }
+              <img className="max-w-lg max-h-lg rounded-lg p-3" ref={imgRef} />
+            </div>
+            <div className="flex flex-col w-1/2">
+              { /* The input box for the NFT title. The title is used later when exporting to the chain. */ }
+              <input
+                type="text"
+                name="title"
+                maxLength={50}
+                placeholder="Give a title"
+                className="my-4"
+              />
 
-          { /* This is a custom button which delegates clicks to the hidden file input field. We can style it however we want. */ }
-          <button type="button" disabled={uploadState !== "Ready"} onClick={() => fileInputRef.current?.click()}>Upload Image</button>
+              { /* This is a custom button which delegates clicks to the hidden file input field. We can style it however we want. */ }
+              <button type="button" disabled={uploadState !== "Ready"} onClick={() => fileInputRef.current?.click()} className="my-4">Upload Image</button>
+              { /* If we are uploading, add a Spinner. */ }
+              <span className="upload-status-hint">{uploadState === "Uploading" && <Spinner />}</span>
 
-          { /* This is a preview box which shows the image the user has uploaded. */ }
-          <img className="max-w-lg max-h-lg" ref={imgRef} />
+              { /* If there was an error, just tell the user. Not much else to do. */ }
+              <span className="upload-status-hint">{uploadState === "Error" && <span className="error">Error ocurred during NFT creation.</span>}</span>
 
-          { /* If we are uploading, add a Spinner. */ }
-          <span className="upload-status-hint">{uploadState === "Uploading" && <Spinner />}</span>
+              { /* On success. */ }
+              <span className="upload-status-hint">{uploadState === "Done" && <span>✅ NFT Created!</span>}</span>
 
-          { /* If there was an error, just tell the user. Not much else to do. */ }
-          <span className="upload-status-hint">{uploadState === "Error" && <span className="error">Error ocurred during NFT creation.</span>}</span>
+              { /* The actual image upload input field. We make it hidden for prettiness. */}
+              <input
+                type="file"
+                name="imageFile"
+                accept="image/*"
+                ref={fileInputRef}
+                style={{display: "none"}}
+                onChange={
+                  (e) => showImagePreview(e, imgRef)
+                }
+              />
 
-          { /* On success. */ }
-          <span className="upload-status-hint">{uploadState === "Done" && <span>✅ NFT Created!</span>}</span>
-
-          { /* The actual image upload input field. We make it hidden for prettiness. */}
-          <input
-            type="file"
-            name="imageFile"
-            accept="image/*"
-            ref={fileInputRef}
-            style={{display: "none"}}
-            onChange={
-              (e) => showImagePreview(e, imgRef)
-            }
-          />
-
-          { /* Submit the form, doing most of the upload client-side. */ }
-          <button type="submit">Create NFT!</button>
+              { /* Submit the form, doing most of the upload client-side. */ }
+              <button type="submit" className="my-4">Create NFT</button>
+            </div>
+          </div>
         </label>
       </form>
     </section>
