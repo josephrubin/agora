@@ -53,10 +53,10 @@ export default function SignUp() {
           Join to start creating and trading NFTs.
         </p>
         <div>
-          <input name="username" placeholder="username" type="text" />
+          <input name="username" placeholder="Username" type="text" />
         </div>
         <div>
-          <input name="password" placeholder="password" type="password" />
+          <input name="password" placeholder="Password" type="password" />
         </div>
         { actionData?.error && <p className="error">{actionData.error}</p> }
         <input type="submit" value="Sign Up" />
