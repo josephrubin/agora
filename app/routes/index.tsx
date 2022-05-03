@@ -90,6 +90,7 @@ export default function CastsLayout() {
           title={modalData?.title ?? "Title Not Found"}
           imageUri={modalData?.uri ?? "https://gateway.ipfs.io/ipfs/QmcWusCimgGuoqwYXw7KecSv4sGY82qFfnkqQgvPdiPyHa?ext=jpeg"}
           history={modalData?.history ?? []}
+          txId={modalData?.txId ?? null}
         />
       </Modal>
     </div>

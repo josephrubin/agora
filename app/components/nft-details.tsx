@@ -27,7 +27,8 @@ function NFTDetails(props: {
   id: string,
   title: string,
   imageUri: string,
-  history: HistoryItem[]
+  history: HistoryItem[],
+  txId?: string
 }) {
   // The network can be set to 'devnet', 'testnet', or 'mainnet-beta'.
   const network = WalletAdapterNetwork.Devnet;
@@ -55,7 +56,7 @@ function NFTDetails(props: {
     <ConnectionProvider endpoint={endpoint}>
       <WalletProvider wallets={wallets} autoConnect>
         <WalletModalProvider>
-          <NftDetailsView id={props.id} title={props.title} imageUri={props.imageUri} history={props.history} />
+          <NftDetailsView txId={props.txId} id={props.id} title={props.title} imageUri={props.imageUri} history={props.history} />
         </WalletModalProvider>
       </WalletProvider>
     </ConnectionProvider>
@@ -69,7 +70,8 @@ const NftDetailsView = (props: {
   id: string,
   title: string,
   imageUri: string,
-  history: HistoryItem[]
+  history: HistoryItem[],
+  txId?: string
 }) => {
   const [loaded, setLoaded] = useState(false);
 
@@ -84,11 +86,13 @@ const NftDetailsView = (props: {
           </div>
         </div>
         <div className="flex flex-col w-full gap-2">
-          <div className="flex flex-row justify-between gap-4">
-            <WalletMultiButton />
-            <WalletDisconnectButton />
-            <ExportNFT id={props.id} title={props.title} imageUri={props.imageUri} imageType="image/png" />
-          </div>
+          {props.txId === null ?
+            <div className="flex flex-row justify-between gap-4">
+              <WalletMultiButton />
+              <WalletDisconnectButton />
+              <ExportNFT id={props.id} title={props.title} imageUri={props.imageUri} imageType="image/png" />
+            </div>
+            : <span className="text-xl font-bold">NFT Exported!</span>}
           <hr className="my-2" />
           <h2>Transaction History</h2>
           <ol className="h-16 ml-8 overflow-y-auto">
@@ -97,12 +101,15 @@ const NftDetailsView = (props: {
               ({h.epoch}) &#8594; {h.target}</li>)
             }
           </ol>
-          <hr className="my-2"/>
-          <Form method="post" className="flex flex-row w-full gap-4">
-            <input type="text" placeholder="Transfer to Username" name="destination" className="flex-grow" />
-            <input type="hidden" name="id" value={props.id} />
-            <button type="submit" value="Transfer">Transfer</button>
-          </Form>
+          {props.txId === null ?
+            <>
+              <hr className="my-2"/>
+              <Form method="post" className="flex flex-row w-full gap-4">
+                <input type="text" placeholder="Transfer to Username" name="destination" className="flex-grow" />
+                <input type="hidden" name="id" value={props.id} />
+                <button type="submit" value="Transfer">Transfer</button>
+              </Form>
+            </> : null}
         </div>
       </div>
     </div>
