@@ -76,7 +76,7 @@ const NftDetailsView = (props: {
       <div className="flex flex-row gap-8 space-between">
         <div className="flex flex-col gap-8">
           <div className="flex flex-col items-center justify-center flex-shrink-0 border-2 rounded-md w-96 h-72">
-            <img src={props.imageUri} />
+            <img className="object-contain w-full h-full" src={props.imageUri} />
           </div>
         </div>
         <div className="flex flex-col w-full gap-2">
