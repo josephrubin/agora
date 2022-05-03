@@ -47,9 +47,8 @@ const accessTokenVerifier = CognitoJwtVerifier.create({
   tokenUse: "access",
 });
 
-// A GraphQL schema type that has at least an id.
-interface TypeWithId {
-  readonly id: string
+interface UserIdCast extends Cast {
+  readonly userId: string
 }
 
 /**
@@ -141,6 +140,7 @@ const lambdaHandler: AsrLambdaHandler = async (event) => {
       // TODO: deal with index later.
       const cast: Cast = {
         id: uuidv4(),
+        title: createCastArgs.input.title,
         index: -1,
         mimeType: createCastArgs.input.mimeType,
         uri: createCastArgs.input.uri,
@@ -202,27 +202,36 @@ const lambdaHandler: AsrLambdaHandler = async (event) => {
 
       // Transfer the cast.
       try {
-        const updatedCast = await dynamoDbDocumentClient.update({
+        // Get the original Cast.
+        const { Item: castToUpdate } = await dynamoDbDocumentClient.get({
           TableName: agoraEnv.AGORA_CAST_TABLE,
           Key: {
-            userId: decodedAccessToken.sub,
             id: transferCastArgs.id,
           },
-          UpdateExpression: "SET userId = :u",//, SET history = list_append(if_not_exists(history, :empty_list), :h)",
-          ExpressionAttributeValues: {
-            ":u": sub,
-            //":empty_list": [],
-            /*":h": [{
-              epoch: Math.floor(new Date().getTime() / 1000),
-              event: "transfer",
-              target: transferCastArgs.username,
-            }],*/
-          },
-          ReturnValues: "ALL_NEW",
+        });
+        if (!castToUpdate) {
+          // Cast not found.
+          return null;
+        }
+
+        // Make a new version of the Cast that reflects the transfer.
+        const updatedCast: UserIdCast = {
+          ...(castToUpdate as Cast),
+          userId: sub,
+          history: [{
+            epoch: String(Math.floor(new Date().getTime() / 1000)),
+            event: "transfer",
+            target: transferCastArgs.username,
+          }].concat(castToUpdate.history),
+        };
+        // Insert the new Cast.
+        await dynamoDbDocumentClient.put({
+          TableName: agoraEnv.AGORA_CAST_TABLE,
+          Item: updatedCast,
         });
 
         // Now that we've transfered the Cast, return the new object.
-        return updatedCast.Attributes;
+        return updatedCast;
       }
       catch {
         throw `Could not transfer cast ${transferCastArgs.id} to ${sub}.`;
@@ -245,27 +254,36 @@ const lambdaHandler: AsrLambdaHandler = async (event) => {
 
       // Transfer the cast.
       try {
-        const updatedCast = await dynamoDbDocumentClient.update({
+        // Get the original Cast.
+        const { Item: castToUpdate } = await dynamoDbDocumentClient.get({
           TableName: agoraEnv.AGORA_CAST_TABLE,
           Key: {
-            userId: decodedAccessToken.sub,
             id: exportCastArgs.id,
           },
-          UpdateExpression: "SET txId = :s, SET history = list_append(if_not_exists(history, :empty_list), :h)",
-          ExpressionAttributeValues: {
-            ":s": exportCastArgs.txId,
-            ":empty_list": [],
-            ":h": [{
-              epoch: Math.floor(new Date().getTime() / 1000),
-              event: "export",
-              target: exportCastArgs.address,
-            }],
-          },
-          ReturnValues: "ALL_NEW",
+        });
+        if (!castToUpdate) {
+          // Cast not found.
+          return null;
+        }
+
+        // Make a new version of the Cast.
+        const updatedCast: Cast = {
+          ...(castToUpdate as Cast),
+          txId: exportCastArgs.txId,
+          history: [{
+            epoch: String(Math.floor(new Date().getTime() / 1000)),
+            event: "export",
+            target: exportCastArgs.address,
+          }].concat(castToUpdate.history),
+        };
+        // Insert the new Cast.
+        await dynamoDbDocumentClient.put({
+          TableName: agoraEnv.AGORA_CAST_TABLE,
+          Item: updatedCast,
         });
 
         // Now that we've transfered the Cast, return the new object.
-        return updatedCast.Attributes;
+        return updatedCast;
       }
       catch {
         throw `Could not export cast ${exportCastArgs.id}`;

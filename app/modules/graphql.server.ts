@@ -9,7 +9,7 @@ import { GraphQLClient } from "graphql-request";
 
 /* The location of our GraphQL server. TODO: This should come in as an environment
  * variable which depends on our target environment. */
-const GRAPHQL_ENDPOINT = "https://jjzwthutuvavfnkeuqbbyqwim4.appsync-api.us-east-1.amazonaws.com/graphql";
+const GRAPHQL_ENDPOINT = "https://qf4wyoqdyfe2jhrxs4uopzh4re.appsync-api.us-east-1.amazonaws.com/graphql";
 
 const graphQlClient = new GraphQLClient(GRAPHQL_ENDPOINT, {
   headers: {

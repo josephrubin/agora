@@ -8,9 +8,15 @@ export async function readCasts(accessToken: string) {
         readAuthenticate(accessToken: $accessToken) {
           casts {
             id
+            title
             index
             mimeType
             uri
+            history {
+              epoch
+              event
+              target
+            }
           }
         }
       }
