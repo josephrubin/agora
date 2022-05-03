@@ -36,11 +36,14 @@
     @apply border-2;
     @apply w-fit;
     @apply px-4;
+    @apply py-2;
     @apply hover:bg-zinc-800
   }
 }
 
-/* NavLink tags get the active class if we are on their page. */
-a.active {
-  text-decoration: underline;
-}
+  /* NavLink tags get the active class if we are on their page. */
+  a.active {
+    @apply underline;
+    @apply underline-offset-4;
+    @apply decoration-2;
+  }

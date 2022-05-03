@@ -46,7 +46,7 @@ export default function CollectionsLayout() {
       <Modal
         isOpen={modalOpen}
         onRequestClose={() => setModalOpen(false)}
-        className="absolute p-8 overflow-y-auto text-white rounded-lg bg-zinc-800 inset-40"
+        className="absolute p-8 overflow-y-auto text-white rounded-lg min-h-fit bg-zinc-800 inset-40"
         overlayClassName="bg-zinc-400/50 fixed inset-0"
       >
         {/* Dummy details for an NFT of a banana. Need to be replaced by cast info */}
