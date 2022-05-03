@@ -40,7 +40,6 @@ export default function Mint() {
       sellerFeeBasisPoints: 0,
       creators: [creator],
     });
-    console.log(data);
 
     try {
       const mintTxId = await mintNFT(
