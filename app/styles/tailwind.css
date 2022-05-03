@@ -24,8 +24,17 @@
   ol {
     @apply list-decimal;
   }
+  ol li {
+    list-style: decimal;
+    list-style-position: inside;
+  }
   button {
     @apply button;
+  }
+  button:disabled {
+    @apply border-zinc-600;
+    @apply bg-zinc-800;
+    @apply text-zinc-600;
   }
   .title {
     @apply text-8xl;

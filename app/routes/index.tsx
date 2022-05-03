@@ -1,5 +1,5 @@
 import { useLoaderData, Outlet, Link, LoaderFunction, Form, ActionFunction } from "remix";
-import { readCasts, transferCast } from "~/modules/casts.server";
+import { /* readCasts, */ transferCast } from "~/modules/casts.server";
 import { Cast } from "~/generated/graphql-schema";
 import { getAccessToken, redirectToLoginIfNull } from "~/modules/session.server";
 
@@ -9,6 +9,8 @@ import { useState } from "react";
 import NftDetails from "~/components/nft-details";
 import AddNFTModal from "~/components/add-nft-modal";
 
+import { readCasts } from "~/modules/mocks/casts.server";
+
 interface LoaderData {
   readonly casts: Cast[];
 }
@@ -16,7 +18,7 @@ interface LoaderData {
 export const loader: LoaderFunction = async ({request}) => {
   const accessToken = redirectToLoginIfNull(await getAccessToken(request));
 
-  return { casts: await readCasts(accessToken) };
+  return { casts: await readCasts({accessToken}) };
 };
 
 export const action: ActionFunction = async ({ request }) => {
@@ -53,23 +55,23 @@ export default function CastsLayout() {
   );
 
   const [modalOpen, setModalOpen] = useState(false);
+  const [modalData, setModalData] = useState<Cast | null>(null);
 
-  const test = (
-    <div className="w-full h-40 border-2 min-w-56 rounded-2xl hover:bg-zinc-700"
-      onClick={() => setModalOpen(true)}
-    ></div>
-  );
+  const NFTCard = ({cast}: {cast: Cast}) =>
+    (<div className="relative w-full h-40 overflow-hidden border-2 shadow-inner min-w-56 rounded-2xl"
+      onClick={() => {setModalData(cast); setModalOpen(true);}}
+    >
+      <div className="absolute inset-0 w-full h-full hover:bg-zinc-600/20" />
+      <img className="object-cover w-full h-full" src={cast.uri} />
+    </div>
+    );
 
   return (
     <div className="flex flex-col gap-4 my-8">
       <h1>My NFTs</h1>
       <div className="grid gap-4 grid-cols-fill-52">
         <AddNFTModal />
-        {test}
-        {test}
-        {test}
-        {test}
-        {test}
+        {casts.map((c, i) => <NFTCard cast={c} key={i}/>)}
       </div>
       <Modal
         isOpen={modalOpen}
@@ -79,8 +81,9 @@ export default function CastsLayout() {
       >
         {/* Dummy details for an NFT of a banana. Need to be replaced by cast info */}
         <NftDetails
-          title="Banana"
-          imageUri="https://gateway.ipfs.io/ipfs/QmcWusCimgGuoqwYXw7KecSv4sGY82qFfnkqQgvPdiPyHa?ext=jpeg"
+          title={modalData?.title ?? "Title Not Found"}
+          imageUri={modalData?.uri ?? "https://gateway.ipfs.io/ipfs/QmcWusCimgGuoqwYXw7KecSv4sGY82qFfnkqQgvPdiPyHa?ext=jpeg"}
+          history={modalData?.history ?? []}
         />
       </Modal>
     </div>

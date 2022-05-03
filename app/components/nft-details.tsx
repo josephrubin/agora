@@ -19,10 +19,12 @@ import {
 import { clusterApiUrl } from "@solana/web3.js";
 
 import ExportNFT from "~/components/export-nft";
+import { HistoryItem } from "~/generated/graphql-schema";
 
 function NFTDetails(props: {
   title: string,
-  imageUri: string
+  imageUri: string,
+  history: HistoryItem[]
 }) {
   // The network can be set to 'devnet', 'testnet', or 'mainnet-beta'.
   const network = WalletAdapterNetwork.Devnet;
@@ -50,21 +52,7 @@ function NFTDetails(props: {
     <ConnectionProvider endpoint={endpoint}>
       <WalletProvider wallets={wallets} autoConnect>
         <WalletModalProvider>
-          <div>
-            <div style={{ display: "flex", justifyContent: "flex-end"}}>
-              <div className="m-2">
-                <WalletMultiButton />
-              </div>
-              <div className="m-2">
-                <WalletDisconnectButton />
-              </div>
-              <div className="m-2">
-                <ExportNFT title={props.title} imageUri={props.imageUri} imageType="image/png" />
-              </div>
-            </div>
-
-            <NftDetailsView title={props.title} imageUri={props.imageUri} />
-          </div>
+          <NftDetailsView title={props.title} imageUri={props.imageUri} history={props.history} />
         </WalletModalProvider>
       </WalletProvider>
     </ConnectionProvider>
@@ -76,7 +64,8 @@ function NFTDetails(props: {
  */
 const NftDetailsView = (props: {
   title: string,
-  imageUri: string
+  imageUri: string,
+  history: HistoryItem[]
 }) => {
   return (
     <div>
@@ -88,20 +77,22 @@ const NftDetailsView = (props: {
           </div>
         </div>
         <div className="flex flex-col w-full gap-2">
-          <div><b>Name:</b> Name Goes Here</div>
-          <div><b>Owner:</b> Owner Goes Here</div>
-          <div><b>Creator:</b> Creator Goes Here</div>
-          <hr className="my-2"/>
+          <div className="flex flex-row justify-between">
+            <WalletMultiButton />
+            <WalletDisconnectButton />
+            <ExportNFT title={props.title} imageUri={props.imageUri} imageType="image/png" />
+          </div>
+          <hr className="my-2" />
           <h2>Transaction History</h2>
-          <ol className="ml-8">
-            <li>X &#8594; Y</li>
-            <li>Y &#8594; Z</li>
-            <li>Z &#8594; W</li>
+          <ol className="h-16 ml-8 overflow-y-auto">
+            {props.history?.map((h, i) =>  <li key={i}>
+              ({h.epoch}) &#8594; {h.target}</li>)
+            }
           </ol>
           <hr className="my-2"/>
           <form className="flex flex-row w-full gap-4">
             <input type="text" placeholder="Transfer to Email or Wallet" className="flex-grow"></input>
-            <input type="submit" value="Transfer"></input>
+            <button type="submit" value="Transfer">Transfer</button>
           </form>
         </div>
       </div>
