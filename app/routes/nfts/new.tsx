@@ -45,14 +45,14 @@ export default function NewCast() {
   const [uploadState, setUploadState] = useState<UploadState>("Ready");
 
   return (
-    <div>
-      <h1>Create a new NFT</h1>
+    <section className="flex flex-col gap-4 py-8">
+      <h1>Create NFT</h1>
 
       { /* Upload recording button and hidden form. */ }
       <form method="POST" encType="multipart/form-data" ref={uploadFormRef}>
-        <label>
+        <label className="flex flex-col gap-4">
           { /* This is a custom button which delegates clicks to the hidden file input field. We can style it however we want. */ }
-          <button type="button" disabled={uploadState !== "Ready"} onClick={() => fileInputRef.current?.click()}>+ Upload Image</button>
+          <button type="button" disabled={uploadState !== "Ready"} onClick={() => fileInputRef.current?.click()}>Upload Image</button>
 
           { /* This is a preview box which shows the image the user has uploaded. */ }
           <img className="max-w-lg max-h-lg" ref={imgRef} />
@@ -79,7 +79,7 @@ export default function NewCast() {
           />
         </label>
       </form>
-    </div>
+    </section>
   );
 }
 
