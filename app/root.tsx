@@ -155,7 +155,7 @@ function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="topography">
-      <div className="gradient flex flex-col justify-between min-h-screen px-32 text-white">
+      <div className="flex flex-col justify-between min-h-screen px-32 text-white gradient">
         <div>
           <header className="flex flex-row items-center justify-between py-4 border-b">
             <Link to="/" title="Remix">
@@ -166,11 +166,6 @@ function Layout({ children }: { children: React.ReactNode }) {
                 <li>
                   <NavLink to="/">Home</NavLink>
                 </li>
-                {accessToken ? (
-                  <li>
-                    <NavLink to="nfts/new">Create NFT</NavLink>
-                  </li>
-                ) : null}
                 {!accessToken ? (
                   <>
                     <li>
