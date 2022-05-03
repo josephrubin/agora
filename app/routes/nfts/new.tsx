@@ -5,6 +5,7 @@ import { CastInput } from "~/generated/graphql-schema";
 import { createCast, exportCast, reorderCast, transferCast, readCast, readCasts } from "~/modules/casts.server";
 import { MAKE_PRESIGNED_UPLOAD_URL_ENDPOINT } from "~/modules/media.server";
 import { getAccessToken, redirectToLoginIfNull } from "~/modules/session.server";
+import { uploadImageToIpfs } from "~/utils/ipfs";
 
 interface LoaderData {
   // The HTTP endpoint to hit to get a presigned URL for image upload.
@@ -54,7 +55,12 @@ export default function NewCast() {
       <form encType="multipart/form-data" ref={uploadFormRef} onSubmit={(event) => clientCreateCast(event, fileInputRef, makePresignedUploadUrlEndpoint)}>
         <label className="flex flex-col gap-4">
           { /* The input box for the NFT title. The title is used later when exporting to the chain. */ }
-          <input type="text" name="title" />
+          <input
+            type="text"
+            name="title"
+            maxLength={50}
+            placeholder="Give a title"
+          />
 
           { /* This is a custom button which delegates clicks to the hidden file input field. We can style it however we want. */ }
           <button type="button" disabled={uploadState !== "Ready"} onClick={() => fileInputRef.current?.click()}>Upload Image</button>
@@ -134,7 +140,8 @@ async function clientCreateCast(event: React.FormEvent, fileInput: RefObject<HTM
     const centralizedImageUri = await userPresignedUrlToUploadImage(presignedUrl);
 
     // Third: upload the image to IPFS.
-    const imageIpfsUri = null;
+    const imageArrayBuffer = await image.arrayBuffer();
+    const imageIpfsUri = await uploadImageToIpfs(imageArrayBuffer);
 
     // Fourth: submit all this data to the server to create the cast.
   }

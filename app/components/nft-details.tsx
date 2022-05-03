@@ -62,7 +62,6 @@ function NFTDetails(props: {
                 <ExportNFT title={props.title} imageUri={props.imageUri} imageType="image/png" />
               </div>
             </div>
-
             <NftDetailsView title={props.title} imageUri={props.imageUri} />
           </div>
         </WalletModalProvider>
