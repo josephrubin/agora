@@ -2,6 +2,7 @@ import { ActionFunction, Form, useActionData, useTransition } from "remix";
 import { Spinner } from "~/components/spinner";
 import { createAgoraSession, createSessionRedirectResponse } from "~/modules/session.server";
 
+import AgoraLogoImage from "../../public/agora-logo.svg";
 interface ActionData {
   readonly error?: string;
 }
@@ -24,7 +25,7 @@ export const action: ActionFunction = async ({ request }) => {
   });
 
   if (session && session.accessToken) {
-    return createSessionRedirectResponse(session, "/");
+    return await createSessionRedirectResponse(session, "/");
   } else {
     return {
       error: "Could not make session",
@@ -38,7 +39,10 @@ export default function LogIn() {
 
   return (
     <div className="flex flex-col items-center gap-8 my-16">
-      <h1 className="title">Agora</h1>
+      <div className="flex flex-row h-24 gap-4">
+        <img className="max-h-full" height="fit" src={AgoraLogoImage}/>
+        <h1 className="title">Agora</h1>
+      </div>
       <h2>Your Community NFT Hub!</h2>
       <Form method="post" className="flex flex-col items-center gap-y-4">
         <div>
@@ -49,7 +53,9 @@ export default function LogIn() {
         </div>
         { actionData?.error && <p className="error">{actionData.error}</p> }
         <div className="flex items-center gap-4">
-          <input type="submit" value="Log In" disabled={transition.state !== "idle"} /> { transition.state !== "idle" && <Spinner /> }
+          {transition.state === "idle"
+            ? <input type="submit" value="Log In" disabled={transition.state !== "idle"} />
+            : <Spinner /> }
         </div>
       </Form>
     </div>

@@ -8,7 +8,6 @@ import {
   Scripts,
   ScrollRestoration,
   useCatch,
-  useLoaderData,
   LoaderFunction
 } from "remix";
 
@@ -18,6 +17,8 @@ import { LinksFunction } from "@remix-run/react/routeModules";
 import { getAccessToken, refreshAccessTokenIfNeeded } from "./modules/session.server";
 import { useAccessToken } from "./modules/session";
 
+import AgoraLogoImage from "../public/agora-logo.svg";
+
 /**
  * This loader will run on every GET page request because it is at the root.
  * The main task is to see if the user is logged in. If they are, make sure
@@ -25,7 +26,7 @@ import { useAccessToken } from "./modules/session";
  * it.
  *
  * If they are not logged in, that's okay too. All child routes will be able
- * to use the useAccessToken hook to get the acceessTokenn (or null if the
+ * to use the useAccessToken hook to get the accessToken (or null if the
  * user is not logged in).
  */
 export const loader: LoaderFunction = async ({request}) => {
@@ -143,7 +144,7 @@ function Layout({ children }: { children: React.ReactNode }) {
   const accessToken = useAccessToken();
 
   return (
-    <div className="flex flex-col justify-between min-h-screen px-32 text-white bg-zinc-900">
+    <div className="flex flex-col justify-between min-h-screen px-32 text-white topography">
       <div>
         <header className="flex flex-row items-center justify-between py-4 border-b">
           <Link to="/" title="Remix">
@@ -190,10 +191,9 @@ function Layout({ children }: { children: React.ReactNode }) {
 
 function AgoraLogo() {
   return (
-    <div>
-      <big>
-        <b>AGORA_LOGO</b>
-      </big>
+    <div className="flex flex-row items-center h-12 gap-4">
+      <img className="max-h-full" height="fit" src={AgoraLogoImage}/>
+      <h1 className="text-5xl font-thin">Agora</h1>
     </div>
   );
 }

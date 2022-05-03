@@ -28,7 +28,7 @@ function getSpinnerStyle() {
     borderTop: "4px solid white",
     borderRight: "4px solid white",
     borderBottom: "4px solid white",
-    borderLeft: "4px solid black",
+    borderLeft: "4px solid transparent",
     animation: "spin 0.6s infinite ease-in-out",
   };
 }
