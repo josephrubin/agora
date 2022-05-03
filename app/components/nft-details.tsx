@@ -86,7 +86,7 @@ const NftDetailsView = (props: {
           </div>
         </div>
         <div className="flex flex-col w-full gap-2">
-          {props.txId === null ?
+          {props.txId === undefined ?
             <div className="flex flex-row justify-between gap-4">
               <WalletMultiButton />
               <WalletDisconnectButton />
@@ -101,7 +101,7 @@ const NftDetailsView = (props: {
               ({h.epoch}) &#8594; {h.target}</li>)
             }
           </ol>
-          {props.txId === null ?
+          {props.txId === undefined ?
             <>
               <hr className="my-2"/>
               <Form method="post" className="flex flex-row w-full gap-4">
