@@ -79,7 +79,7 @@ export default function CastsLayout() {
         className="absolute p-8 overflow-y-auto text-white rounded-lg min-h-fit bg-zinc-800 inset-40"
         overlayClassName="bg-zinc-400/50 fixed inset-0"
       >
-        {/* Dummy details for an NFT of a banana. Need to be replaced by cast info */}
+        <span onClick={() => setModalOpen(false)} className="absolute text-2xl cursor-pointer top-2 right-4">&times;</span>
         <NftDetails
           title={modalData?.title ?? "Title Not Found"}
           imageUri={modalData?.uri ?? "https://gateway.ipfs.io/ipfs/QmcWusCimgGuoqwYXw7KecSv4sGY82qFfnkqQgvPdiPyHa?ext=jpeg"}
