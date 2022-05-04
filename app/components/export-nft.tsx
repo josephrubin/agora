@@ -58,7 +58,7 @@ const ExportNFT = (props: {
       if (mintTxId === "failed") {
         alert("Failed to export NFT! Check if you have sufficient SOL balance in your wallet to approve the transaction");
       } else {
-        const mintUrl = "https://explorer.solana.com/tx/" + mintTxId + "?cluster=devnet";
+        const mintUrl = "https://explorer.solana.com/tx/" + mintTxId;
         console.log("Success 😎! Check out your newly minted NFT at: " + mintUrl);
 
         setFinishedMinting(true);
